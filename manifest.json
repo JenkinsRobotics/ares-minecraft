@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "Embodied autonomous Minecraft AI companion powered by Mineflayer, dynamic pathfinding, and ARES.",
   "author": "Jenkins Robotics",
-  "homepage": "https://github.com/Jenkins-Robotics/ares-minecraft",
+  "homepage": "https://github.com/JenkinsRobotics/ares-minecraft",
   "license": "MIT",
   "category": "Gaming & Robotics",
   "capabilities": [

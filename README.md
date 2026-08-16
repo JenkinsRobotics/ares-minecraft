@@ -1,7 +1,7 @@
 # ARES Minecraft Companion 🎮🤖
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![ARES Extension](https://img.shields.io/badge/ARES-Extension-08EBF1.svg)](https://github.com/Jenkins-Robotics)
+[![ARES Extension](https://img.shields.io/badge/ARES-Extension-08EBF1.svg)](https://github.com/JenkinsRobotics)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18.0.0-green.svg)](https://nodejs.org)
 
 **ARES Minecraft Companion** is an embodied autonomous AI companion that lives and acts inside your Minecraft world. Built by **Jenkins Robotics** using [Mineflayer](https://github.com/PrismarineJS/mineflayer), it connects directly to **ARES** and **Jaeger AI** to provide real-time perception, dynamic 3D pathfinding, combat defense, resource gathering, and multi-player social awareness.
@@ -52,7 +52,7 @@ ares-minecraft/
 1. Open **ARES WebUI** $\rightarrow$ **Settings** $\rightarrow$ **Extensions Gallery**.
 2. Click **Install** on **"ARES Minecraft Companion"** (or run CLI):
    ```bash
-   ares extension install Jenkins-Robotics/ares-minecraft
+   ares extension install JenkinsRobotics/ares-minecraft
    ```
 3. Enable the extension in ARES settings. The background sidecar starts automatically and adds the **Minecraft Tab** to your sidebar.
 
