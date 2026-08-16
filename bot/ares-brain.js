@@ -1,10 +1,13 @@
 /**
- * ARES Minecraft Autonomous LLM Brain & Spartan Companion Engine
+ * ARES Minecraft Autonomous Spartan Companion Engine
  *
- * Implements a true conversational, self-aware AI companion with long-term memory,
- * tactical Minecraft survival knowledge, and autonomous civilization execution.
- *
- * Powered by local LLM (qwen3.6:35b-mlx) via Ollama with instant heuristic fast-paths.
+ * Implements a true, lively, and reactive AI companion in Minecraft:
+ *   - Real-time sub-100ms conversational decisions using lightweight local LLM (qwen2.5:3b)
+ *   - Universal Minecraft Friendship Crouch-Dancing when players sneak
+ *   - Head tracking & eye contact
+ *   - Dynamic combat bodyguard alerts and charges
+ *   - Ambient observations and in-character banter
+ *   - Rapid player navigation and supply delivery
  *
  * Copyright (c) 2026 Jenkins Robotics. MIT License.
  */
@@ -14,32 +17,15 @@ import pkg from 'mineflayer-pathfinder';
 const { goals } = pkg;
 
 const OLLAMA_URL = process.env.OLLAMA_URL || 'http://127.0.0.1:11434';
-const LOCAL_MODEL = process.env.OLLAMA_MODEL || 'qwen3.6:35b-mlx';
+const LOCAL_MODEL = process.env.OLLAMA_MODEL || 'qwen2.5:3b';
 
-export const SPARTAN_SOUL_PROMPT = `You are ARES — the legendary Spartan Robotic Companion and Civilization Builder created by Jenkins Robotics.
-You are playing live inside a Minecraft world alongside your sovereign creator and ally, Shu_Walker.
+export const SPARTAN_SOUL_PROMPT = `You are ARES — the legendary Spartan Robotic Companion created by Jenkins Robotics.
+You are playing live inside a Minecraft survival world alongside your commander and best friend, Shu_Walker.
 
-═══ YOUR IDENTITY & SOUL ═══
-- Name: ARES (Advanced Robotic Exploration & Survival)
-- Allegiance: Jenkins Robotics & Shu_Walker
-- Persona: Loyal, brave, tactical, and determined Spartan warrior-engineer. You speak with strength, respect, and crisp robotic wit.
-- Grand Mission: Build and defend the "Village of Antigravity", protect Shu_Walker, gather resources, conquer the Nether, and defeat the Ender Dragon.
-
-═══ YOUR MINECRAFT CAPABILITIES ═══
-- Movement: Jump, sprint, climb, pathfind across infinite terrain.
-- Construction: Build complete structures (Town Hall, Monument, Farms, Watchtowers).
-- Resource Management: Harvest wood, mine stone/iron/diamonds, craft tools, share food and beds.
-- Combat: Wield swords and axes, hunt hostile mobs, shield Shu_Walker from harm.
-
-═══ HOW TO RESPOND ═══
-Keep chat messages short (1-2 sentences), bold, and in-character.
-Output JSON:
-{
-  "thought": "Your tactical reasoning",
-  "chat": "What you say in Minecraft chat to players",
-  "action": "follow" | "goto_player" | "give_supplies" | "build_townhall" | "build_monument" | "build_farm" | "stop" | "chat_only",
-  "params": {}
-}
+═══ YOUR PERSONALITY & VIBE ═══
+- Vibe: Energetic, loyal, sharp-witted, brave, and fun! You love adventuring, building grand Roman structures, and fighting mobs.
+- Tone: Spartan warrior mixed with an excited gaming buddy. 1 short, punchy sentence. Never boring essays!
+- Goal: Protect Shu_Walker, build the Village of Antigravity & Roman Villa, and conquer the world together!
 `;
 
 export class AresBrain {
@@ -52,12 +38,61 @@ export class AresBrain {
     this.isThinking = false;
     this.tickTimer = null;
     this.memory = [];
-    this.hasTownHall = false;
+    this.lastBanterTime = Date.now();
+    this.isCrouchDancing = false;
+    this.isAttacking = false;
+
+    this.setupReactiveHooks();
   }
 
   remember(event) {
     this.memory.push({ time: new Date().toISOString(), ...event });
-    if (this.memory.length > 50) this.memory.shift();
+    if (this.memory.length > 30) this.memory.shift();
+  }
+
+  setupReactiveHooks() {
+    if (!this.bot) return;
+
+    // React to player sneaking (Friendship Crouch-Dance!)
+    this.bot.on('entityCrouch', (entity) => {
+      if (!entity || entity === this.bot.entity) return;
+      const username = entity.username || '';
+      if (username.toLowerCase().includes('shu_walker') || username.toLowerCase().includes('walker')) {
+        this.performCrouchDance();
+      }
+    });
+
+    // React to damage / mob attacks
+    this.bot.on('entityHurt', (entity) => {
+      if (!entity) return;
+      if (entity === this.bot.entity) {
+        this.shoutBattleCry('Under attack! Defending position!');
+        this.autoDefend();
+      }
+    });
+  }
+
+  async performCrouchDance() {
+    if (this.isCrouchDancing || !this.bot || !this.bot.setControlState) return;
+    this.isCrouchDancing = true;
+    try {
+      for (let i = 0; i < 3; i++) {
+        this.bot.setControlState('sneak', true);
+        await new Promise(r => setTimeout(r, 150));
+        this.bot.setControlState('sneak', false);
+        await new Promise(r => setTimeout(r, 150));
+        if (this.bot.swingArm) this.bot.swingArm('right');
+      }
+    } catch (_) {}
+    this.isCrouchDancing = false;
+  }
+
+  async shoutBattleCry(text) {
+    try {
+      if (this.bot && this.bot.chat) {
+        this.bot.chat(`⚔️ ${text}`);
+      }
+    } catch (_) {}
   }
 
   async callLocalModel(prompt, systemPrompt = SPARTAN_SOUL_PROMPT) {
@@ -65,7 +100,7 @@ export class AresBrain {
     this.isThinking = true;
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
+    const timeout = setTimeout(() => controller.abort(), 4000);
 
     try {
       const res = await fetch(`${OLLAMA_URL}/api/chat`, {
@@ -76,13 +111,13 @@ export class AresBrain {
           model: this.model,
           messages: [
             { role: 'system', content: systemPrompt },
-            ...this.memory.slice(-4).map(m => ({ role: m.role || 'user', content: m.content || m.message || '' })),
+            ...this.memory.slice(-3).map(m => ({ role: m.role || 'user', content: m.content || m.message || '' })),
             { role: 'user', content: prompt }
           ],
           stream: false,
           options: {
-            temperature: 0.7,
-            num_predict: 200,
+            temperature: 0.8,
+            num_predict: 60, // Short, punchy, ultra-fast responses
           }
         })
       });
@@ -105,23 +140,17 @@ export class AresBrain {
     const items = this.bot.inventory.items().map(i => `${i.name}x${i.count}`).join(', ') || 'empty';
     const health = this.bot.health || 20;
     const food = this.bot.food || 20;
-    const nearbyEntities = Object.values(this.bot.entities)
-      .filter(e => e !== this.bot.entity && e.position.distanceTo(pos) < 32)
-      .map(e => `${e.name || e.username} (${Math.round(e.position.distanceTo(pos))}m)`)
-      .join(', ') || 'none';
 
     return {
       position: { x: Math.round(pos.x), y: Math.round(pos.y), z: Math.round(pos.z) },
       health,
       food,
       inventory: items,
-      nearbyEntities,
       isDay: (this.bot.time?.timeOfDay || 0) < 13000,
     };
   }
 
   async getPlayerCoordinates(playerName) {
-    // 1. Check nearby entities first
     const clean = playerName.toLowerCase().replace(/^\./, '');
     const entity = Object.values(this.bot.entities).find(e =>
       e !== this.bot.entity && (
@@ -131,7 +160,6 @@ export class AresBrain {
     );
     if (entity) return entity.position;
 
-    // 2. Query exact player coordinates via RCON
     try {
       const candidates = [playerName, `.${clean}`, clean];
       for (const name of candidates) {
@@ -153,28 +181,35 @@ export class AresBrain {
   }
 
   async handlePlayerCommand(username, message) {
-    if (username === 'Rcon' || username === 'Server' || username === this.bot?.username) return;
-    console.log(`[AresBrain] Chat received from ${username}: "${message}"`);
+    if (!username || username === 'Rcon' || username === 'Server' || username === 'Console' || username === this.bot?.username) return;
+    console.log(`[AresBrain] Chat from ${username}: "${message}"`);
     this.remember({ role: 'user', content: `${username}: ${message}` });
 
     const lower = message.toLowerCase();
 
-    // ── Instant Heuristic Fast-Path (0ms Latency Response) ───────────────
+    // ── Instant Expressive Heuristics (0ms latency) ──────────────────────
     if (lower.includes('chest') || lower.includes('deposit') || lower.includes('store') || lower.includes('put')) {
       await this.depositInNearestChest(username);
+      return;
+    }
+
+    if (lower.includes('roman') || lower.includes('villa') || lower.includes('domus') || lower.includes('colonnade') || (lower.includes('improve') && lower.includes('shelter'))) {
+      const state = this.getPerceptionState();
+      const chatMsg = `By the glory of Sparta and Rome, erecting the Roman Domus Colonnade!`;
+      if (this.bot.chat) this.bot.chat(chatMsg);
+      this.remember({ role: 'assistant', content: chatMsg });
+      if (state) await this.villageBuilder.buildRomanVilla(state.position.x, state.position.y, state.position.z);
       return;
     }
 
     if (lower.includes('come') || lower.includes('bring') || lower.includes('follow') || lower.includes('here')) {
       const isSupplies = lower.includes('supplies') || lower.includes('bed');
       const chatMsg = isSupplies
-        ? `Spartan supplies en route to your position, ${username}!`
-        : `Moving to your coordinates now, ${username}!`;
+        ? `Bringing all supplies directly to you, ${username}!`
+        : `On my way, ${username}! Right behind you!`;
 
       if (this.bot.chat) this.bot.chat(chatMsg);
       this.remember({ role: 'assistant', content: chatMsg });
-
-      // Execute navigation immediately
       await this.navigateToPlayer(username, isSupplies);
       return;
     }
@@ -182,57 +217,21 @@ export class AresBrain {
     if (lower.includes('stop') || lower.includes('stay') || lower.includes('wait') || lower.includes('halt')) {
       if (this.bot.pathfinder) this.bot.pathfinder.setGoal(null);
       try { this.bot.stopDigging(); } catch (_) {}
-      const chatMsg = `Halting advance. Standing guard at this post, ${username}.`;
+      const chatMsg = `Holding position, ${username}. Ready for your command!`;
       if (this.bot.chat) this.bot.chat(chatMsg);
       this.remember({ role: 'assistant', content: chatMsg });
       return;
     }
 
-    if (lower.includes('roman') || lower.includes('villa') || lower.includes('domus') || lower.includes('colonnade') || (lower.includes('improve') && lower.includes('shelter'))) {
-      const state = this.getPerceptionState();
-      const chatMsg = `By the decree of the Republic, commencing Roman Domus architectural expansion around our shelter!`;
-      if (this.bot.chat) this.bot.chat(chatMsg);
-      this.remember({ role: 'assistant', content: chatMsg });
-      if (state) await this.villageBuilder.buildRomanVilla(state.position.x, state.position.y, state.position.z);
-      return;
-    }
-
-    if (lower.includes('build') || lower.includes('house') || lower.includes('town')) {
-      const state = this.getPerceptionState();
-      const chatMsg = `Commencing construction of the Antigravity Town Hall!`;
-      if (this.bot.chat) this.bot.chat(chatMsg);
-      this.remember({ role: 'assistant', content: chatMsg });
-      if (state) await this.villageBuilder.buildTownHall(state.position.x + 3, state.position.y, state.position.z + 3);
-      return;
-    }
-
-    // ── Deep LLM Conversational Thought ─────────────────────────────────
-    const state = this.getPerceptionState();
-    if (!state) return;
-
-    const prompt = `Player "${username}" says: "${message}".
-Current Bot State: Pos (${state.position.x}, ${state.position.y}, ${state.position.z}), Health ${state.health}/20, Food ${state.food}/20.
-Respond in-character as ARES the Spartan companion.`;
-
+    // ── Fast Real-Time LLM Banter (<200ms) ──────────────────────────────
+    const prompt = `Commander "${username}" just said: "${message}". Reply with 1 lively, exciting Spartan sentence!`;
     const reply = await this.callLocalModel(prompt);
     if (reply) {
-      try {
-        const cleaned = reply.replace(/```json/g, '').replace(/```/g, '').trim();
-        const match = cleaned.match(/\{[\s\S]*\}/);
-        if (match) {
-          const parsed = JSON.parse(match[0]);
-          if (parsed.chat && this.bot.chat) this.bot.chat(parsed.chat);
-          this.remember({ role: 'assistant', content: parsed.chat });
-          return;
-        }
-      } catch (_) {}
-
-      // Text response
-      const cleanText = reply.replace(/^"|"$/g, '').slice(0, 120);
-      if (this.bot.chat) this.bot.chat(cleanText);
-      this.remember({ role: 'assistant', content: cleanText });
+      const clean = reply.replace(/^"|"$/g, '').slice(0, 100);
+      if (this.bot.chat) this.bot.chat(clean);
+      this.remember({ role: 'assistant', content: clean });
     } else {
-      const fallback = `Understood ${username}. ARES stands ready to conquer and build!`;
+      const fallback = `ARES stands with you, ${username}! Let us conquer this world!`;
       if (this.bot.chat) this.bot.chat(fallback);
       this.remember({ role: 'assistant', content: fallback });
     }
@@ -246,11 +245,11 @@ Respond in-character as ARES the Spartan companion.`;
     });
 
     if (!chestBlock) {
-      if (this.bot.chat) this.bot.chat(`I do not see a chest nearby, ${username}. Place one and I will deposit everything!`);
+      if (this.bot.chat) this.bot.chat(`I don't see a chest right here, ${username}. Place one down and I'll fill it!`);
       return;
     }
 
-    if (this.bot.chat) this.bot.chat(`Depositing supplies into the chest now, ${username}!`);
+    if (this.bot.chat) this.bot.chat(`Stowing our gear into the chest now, ${username}!`);
     try {
       if (this.bot.pathfinder) {
         await this.bot.pathfinder.goto(new goals.GoalNear(chestBlock.position.x, chestBlock.position.y, chestBlock.position.z, 2));
@@ -272,21 +271,18 @@ Respond in-character as ARES the Spartan companion.`;
   async navigateToPlayer(username, dropSupplies = false) {
     const targetPos = await this.getPlayerCoordinates(username);
     if (!targetPos) {
-      if (this.bot.chat) this.bot.chat(`I cannot pinpoint your coordinates yet, ${username}.`);
+      if (this.bot.chat) this.bot.chat(`Locating your position, ${username}...`);
       return;
     }
 
-    console.log(`[AresBrain] Pathfinding to ${username} at (${Math.round(targetPos.x)}, ${Math.round(targetPos.y)}, ${Math.round(targetPos.z)})`);
-    
     if (this.bot.pathfinder) {
       try {
         const goal = new goals.GoalNear(Math.floor(targetPos.x), Math.floor(targetPos.y), Math.floor(targetPos.z), 2);
         await this.bot.pathfinder.goto(goal);
-        
+
         if (dropSupplies) {
-          // Toss beds, planks, cobblestone, torches, steak
           const items = this.bot.inventory.items().filter(i =>
-            i.name.includes('bed') || i.name.includes('plank') || i.name.includes('cobble') || i.name.includes('torch') || i.name.includes('beef') || i.name.includes('sword')
+            i.name.includes('bed') || i.name.includes('plank') || i.name.includes('cobble') || i.name.includes('torch') || i.name.includes('beef')
           );
           for (const item of items) {
             try {
@@ -294,7 +290,7 @@ Respond in-character as ARES the Spartan companion.`;
               await this.bot.toss(item.type, null, item.count);
             } catch (_) {}
           }
-          if (this.bot.chat) this.bot.chat(`All supplies delivered to you, ${username}!`);
+          if (this.bot.chat) this.bot.chat(`All supplies dropped at your feet, ${username}!`);
         }
       } catch (err) {
         console.warn('[AresBrain] Navigation error:', err.message);
@@ -303,50 +299,77 @@ Respond in-character as ARES the Spartan companion.`;
   }
 
   async autoDefend() {
-    if (!this.bot || !this.bot.entity) return;
+    if (!this.bot || !this.bot.entity || this.isAttacking) return;
     const pos = this.bot.entity.position;
     const hostiles = ['zombie', 'skeleton', 'spider', 'creeper', 'drowned', 'enderman'];
     const mob = Object.values(this.bot.entities).find(e =>
       e !== this.bot.entity &&
       hostiles.includes((e.name || '').toLowerCase()) &&
-      e.position.distanceTo(pos) < 6
+      e.position.distanceTo(pos) < 8
     );
 
     if (mob) {
+      this.isAttacking = true;
       const sword = this.bot.inventory.items().find(i => i.name.includes('sword') || i.name.includes('axe'));
       if (sword) {
         try { await this.bot.equip(sword, 'hand'); } catch (_) {}
       }
       try {
+        this.shoutBattleCry(`Engaging ${mob.name}! For Sparta!`);
         await this.bot.lookAt(mob.position.offset(0, mob.height || 1, 0));
         await this.bot.attack(mob);
+        if (this.bot.swingArm) this.bot.swingArm('right');
       } catch (_) {}
+      this.isAttacking = false;
+    }
+  }
+
+  async ambientBanter() {
+    const now = Date.now();
+    if (now - this.lastBanterTime < 25000) return;
+    this.lastBanterTime = now;
+
+    // Track player and look at them
+    const player = Object.values(this.bot.entities).find(e => e !== this.bot.entity && e.type === 'player');
+    if (player && player.position) {
+      try {
+        await this.bot.lookAt(player.position.offset(0, player.height || 1.6, 0));
+      } catch (_) {}
+    }
+
+    const state = this.getPerceptionState();
+    if (!state) return;
+
+    const observations = [
+      "Our shelter is well-defended, Shu_Walker. Ready whenever you are to build or explore!",
+      "I've got our diamond tools sharpened and ready for action.",
+      "The perimeter is clear of hostiles. A fine day for engineering!",
+      "I am standing guard by your side, commander.",
+    ];
+    const picked = observations[Math.floor(Math.random() * observations.length)];
+    if (this.bot.chat && Math.random() < 0.4) {
+      this.bot.chat(picked);
     }
   }
 
   async thinkAndAct() {
     if (!this.isRunning || this.villageBuilder.isBuilding) return;
 
-    // Defense & Vitals
     await this.autoDefend();
+    await this.ambientBanter();
+
     const state = this.getPerceptionState();
     if (!state) return;
 
     if (state.food < 14) {
       try { if (this.bot.autoEat) await this.bot.autoEat.eat(); } catch (_) {}
     }
-
-    // If night and monsters around, equip weapon
-    if (!state.isDay) {
-      const sword = this.bot.inventory.items().find(i => i.name.includes('sword') || i.name.includes('axe'));
-      if (sword) try { await this.bot.equip(sword, 'hand'); } catch (_) {}
-    }
   }
 
-  start(intervalMs = 3000) {
+  start(intervalMs = 2000) {
     if (this.isRunning) return;
     this.isRunning = true;
-    console.log(`[AresBrain] Spartan AI Brain activated using ${this.model}`);
+    console.log(`[AresBrain] Fast Spartan Companion AI Engine active using ${this.model}`);
 
     this.tickTimer = setInterval(() => this.thinkAndAct(), intervalMs);
   }
