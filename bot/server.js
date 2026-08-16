@@ -2750,6 +2750,7 @@ const httpServer = http.createServer(async (req, res) => {
         if (structure === 'townhall') resBuild = await villageBuilder.buildTownHall(pos.x + 3, pos.y, pos.z + 3);
         else if (structure === 'monument') resBuild = await villageBuilder.buildMonument(pos.x, pos.y, pos.z);
         else if (structure === 'farm') resBuild = await villageBuilder.buildFarm(pos.x - 4, pos.y, pos.z - 4);
+        else if (structure === 'roman' || structure === 'villa') resBuild = await villageBuilder.buildRomanVilla(pos.x, pos.y, pos.z);
         return respond(res, 200, { ok: true, result: resBuild });
       }
 

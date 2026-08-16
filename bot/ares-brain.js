@@ -188,6 +188,15 @@ export class AresBrain {
       return;
     }
 
+    if (lower.includes('roman') || lower.includes('villa') || lower.includes('domus') || lower.includes('colonnade') || (lower.includes('improve') && lower.includes('shelter'))) {
+      const state = this.getPerceptionState();
+      const chatMsg = `By the decree of the Republic, commencing Roman Domus architectural expansion around our shelter!`;
+      if (this.bot.chat) this.bot.chat(chatMsg);
+      this.remember({ role: 'assistant', content: chatMsg });
+      if (state) await this.villageBuilder.buildRomanVilla(state.position.x, state.position.y, state.position.z);
+      return;
+    }
+
     if (lower.includes('build') || lower.includes('house') || lower.includes('town')) {
       const state = this.getPerceptionState();
       const chatMsg = `Commencing construction of the Antigravity Town Hall!`;

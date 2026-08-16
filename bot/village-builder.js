@@ -230,4 +230,75 @@ export class VillageBuilder {
     this.currentStructure = null;
     return { ok: true, structure: 'Antigravity Community Farm' };
   }
+
+  /**
+   * Build the "Roman Domus / Villa" architectural upgrade
+   * Features: Symmetrical Colonnade pillars, Sandstone & Polished Stone mosaic floor,
+   * Central Impluvium Atrium, Grand Portico Archway, and Roman Lantern lighting.
+   */
+  async buildRomanVilla(originX, originY, originZ) {
+    this.isBuilding = true;
+    this.currentStructure = 'Roman Domus Villa';
+    await this.announce('🏛️ Commencing construction of the Roman Domus Villa!');
+
+    const ox = Math.floor(originX);
+    const oy = Math.floor(originY);
+    const oz = Math.floor(originZ);
+
+    // 1. Mosaic Floor (9x9) - Sandstone & Polished Diorite/Stone
+    await this.announce('🏛️ Laying Roman mosaic stone & sandstone flooring...');
+    for (let dx = -4; dx <= 4; dx++) {
+      for (let dz = -4; dz <= 4; dz++) {
+        const isBorder = Math.abs(dx) === 4 || Math.abs(dz) === 4;
+        const block = isBorder ? 'smooth_stone' : ((dx + dz) % 2 === 0 ? 'sandstone' : 'cobblestone');
+        await this.placeAt(ox + dx, oy, oz + dz, block);
+      }
+    }
+
+    // 2. Colonnade Pillars (4 Corner Classical Columns - Height 4)
+    await this.announce('🏛️ Raising Roman Colonnade pillars...');
+    const pillarOffsets = [[-3, -3], [3, -3], [-3, 3], [3, 3], [-3, 0], [3, 0]];
+    for (const [px, pz] of pillarOffsets) {
+      for (let h = 1; h <= 3; h++) {
+        await this.placeAt(ox + px, oy + h, oz + pz, 'smooth_stone');
+      }
+      await this.placeAt(ox + px, oy + 4, oz + pz, 'torch');
+    }
+
+    // 3. Central Impluvium (Atrium Fountain)
+    await this.announce('⛲ Constructing central Atrium and Impluvium water basin...');
+    await this.placeAt(ox, oy, oz, 'water');
+    await this.placeAt(ox - 1, oy + 1, oz, 'torch');
+    await this.placeAt(ox + 1, oy + 1, oz, 'torch');
+    await this.placeAt(ox, oy + 1, oz - 1, 'torch');
+    await this.placeAt(ox, oy + 1, oz + 1, 'torch');
+
+    // 4. Perimeter Walls & Classical Archways
+    for (let dy = 1; dy <= 3; dy++) {
+      for (let dx = -4; dx <= 4; dx++) {
+        for (let dz = -4; dz <= 4; dz++) {
+          const isOuter = Math.abs(dx) === 4 || Math.abs(dz) === 4;
+          if (!isOuter) continue;
+          // Leave grand entrance arch at (dx=0, dz=-4)
+          if (dz === -4 && Math.abs(dx) <= 1 && (dy === 1 || dy === 2)) continue;
+          // Window openings
+          if (Math.abs(dx) === 4 && Math.abs(dz) === 1 && dy === 2) {
+            await this.placeAt(ox + dx, oy + dy, oz + dz, 'glass');
+            continue;
+          }
+          await this.placeAt(ox + dx, oy + dy, oz + dz, 'sandstone');
+        }
+      }
+    }
+
+    // 5. Living Quarters Amenities
+    await this.placeAt(ox - 3, oy + 1, oz + 3, 'red_bed');
+    await this.placeAt(ox - 2, oy + 1, oz + 3, 'chest');
+    await this.placeAt(ox + 3, oy + 1, oz + 3, 'crafting_table');
+
+    await this.announce('🏛️ Roman Domus Villa completed in honor of Shu_Walker and Jenkins Robotics!');
+    this.isBuilding = false;
+    this.currentStructure = null;
+    return { ok: true, structure: 'Roman Domus Villa', location: { x: ox, y: oy, z: oz } };
+  }
 }
