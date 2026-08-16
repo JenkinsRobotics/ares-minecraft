@@ -452,6 +452,31 @@ body {
   margin-bottom: 8px;
 }
 
+.chat-header .nav-tab {
+  background: #141c2b;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #7e8b9f;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chat-header .nav-tab:hover {
+  background: #1a2436;
+  color: #fff;
+  border-color: rgba(8, 235, 241, 0.3);
+}
+
+.chat-header .nav-tab.active {
+  background: rgba(8, 235, 241, 0.15) !important;
+  color: var(--accent-cyan) !important;
+  border-color: var(--accent-cyan) !important;
+  box-shadow: 0 0 10px rgba(8, 235, 241, 0.2);
+}
+
 .chat-title {
   font-size: 12px;
   font-weight: 700;
