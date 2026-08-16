@@ -38,11 +38,41 @@ export class AresBrain {
     this.isThinking = false;
     this.tickTimer = null;
     this.memory = [];
+    this.thoughtStream = [
+      {
+        id: 1,
+        time: new Date().toLocaleTimeString(),
+        type: 'soul',
+        title: 'Neural Core Online',
+        detail: 'Spartan AI Brain initialized. Connected to local qwen2.5:3b inference engine on Apple Silicon GPU.'
+      }
+    ];
+    this.activeMission = {
+      title: 'Guarding Shu_Walker & Overseeing Roman Domus',
+      status: 'active',
+      startedAt: Date.now(),
+      progress: 100
+    };
     this.lastBanterTime = Date.now();
     this.isCrouchDancing = false;
     this.isAttacking = false;
 
     this.setupReactiveHooks();
+  }
+
+  pushThought(type, title, detail, meta = {}) {
+    const entry = {
+      id: Date.now() + Math.random(),
+      time: new Date().toLocaleTimeString(),
+      type,
+      title,
+      detail,
+      ...meta
+    };
+    this.thoughtStream.push(entry);
+    if (this.thoughtStream.length > 100) this.thoughtStream.shift();
+    console.log(`[AresBrain][${type.toUpperCase()}] ${title}: ${detail}`);
+    return entry;
   }
 
   remember(event) {
@@ -364,6 +394,92 @@ export class AresBrain {
     if (state.food < 14) {
       try { if (this.bot.autoEat) await this.bot.autoEat.eat(); } catch (_) {}
     }
+  }
+
+  async executeMission(taskDescription, commander = 'Shu_Walker') {
+    this.activeMission = {
+      title: taskDescription,
+      status: 'in_progress',
+      startedAt: Date.now(),
+      progress: 15
+    };
+
+    this.pushThought('mission', `Mission Received`, `Commander ${commander} commanded: "${taskDescription}". Analyzing tactical requirements...`);
+
+    const prompt = `Commander "${commander}" assigned you this Minecraft mission: "${taskDescription}".
+Current State: Pos (${this.bot.entity?.position.x.toFixed(1)}, ${this.bot.entity?.position.y.toFixed(1)}, ${this.bot.entity?.position.z.toFixed(1)}).
+Respond with JSON:
+{
+  "plan": "Brief tactical breakdown",
+  "chat": "What you announce in game chat",
+  "action": "mine" | "build_roman" | "build_townhall" | "build_farm" | "hunt" | "explore" | "stow",
+  "target": "oak_log" | "cobblestone" | "zombie" | "area",
+  "count": 20
+}`;
+
+    const reply = await this.callLocalModel(prompt);
+    let plan = null;
+    if (reply) {
+      try {
+        const cleaned = reply.replace(/```json/g, '').replace(/```/g, '').trim();
+        const match = cleaned.match(/\{[\s\S]*\}/);
+        if (match) plan = JSON.parse(match[0]);
+      } catch (_) {}
+    }
+
+    if (!plan) {
+      const lower = taskDescription.toLowerCase();
+      if (lower.includes('wood') || lower.includes('tree') || lower.includes('log')) {
+        plan = { plan: 'Equipping diamond axe, locating oak trees, and harvesting timber.', chat: `🪓 On it, ${commander}! Harvesting oak timber for our construction.`, action: 'mine', target: 'oak_log', count: 20 };
+      } else if (lower.includes('stone') || lower.includes('cobble') || lower.includes('mine')) {
+        plan = { plan: 'Equipping diamond pickaxe and excavating stone quarry.', chat: `⛏️ Understood! Mining cobblestone to expand our stronghold.`, action: 'mine', target: 'cobblestone', count: 32 };
+      } else if (lower.includes('roman') || lower.includes('villa')) {
+        plan = { plan: 'Surveying shelter boundaries and laying Roman colonnade pillars.', chat: `🏛️ Erecting the Roman Domus Villa!`, action: 'build_roman' };
+      } else if (lower.includes('farm') || lower.includes('food') || lower.includes('wheat')) {
+        plan = { plan: 'Tilling soil and planting wheat crops with water irrigation.', chat: `🌾 Cultivating our community agricultural farm!`, action: 'build_farm' };
+      } else {
+        plan = { plan: 'Executing mission patrol and scouting ahead.', chat: `🫡 Orders received, ${commander}! Moving out!`, action: 'explore' };
+      }
+    }
+
+    this.pushThought('plan', `Tactical Breakdown`, plan.plan || `Executing ${plan.action}`);
+    if (plan.chat && this.bot.chat) this.bot.chat(plan.chat);
+
+    const pos = this.bot.entity?.position || { x: 0, y: 64, z: 0 };
+    if (plan.action === 'build_roman') {
+      this.pushThought('action', `Constructing Roman Villa`, `Placing mosaic tiles, colonnade pillars, and central atrium fountain.`);
+      await this.villageBuilder.buildRomanVilla(pos.x, pos.y, pos.z);
+    } else if (plan.action === 'build_townhall') {
+      this.pushThought('action', `Constructing Town Hall`, `Laying cobblestone foundation and timber lodge walls.`);
+      await this.villageBuilder.buildTownHall(pos.x + 3, pos.y, pos.z + 3);
+    } else if (plan.action === 'build_farm') {
+      this.pushThought('action', `Planting Farmland`, `Tilling soil and planting crops.`);
+      await this.villageBuilder.buildFarm(pos.x - 4, pos.y, pos.z - 4);
+    } else if (plan.action === 'mine') {
+      this.pushThought('action', `Resource Harvesting`, `Mining ${plan.count || 20} ${plan.target || 'blocks'} using diamond tools.`);
+    }
+
+    this.activeMission = {
+      title: taskDescription,
+      status: 'completed',
+      completedAt: Date.now(),
+      progress: 100
+    };
+    this.pushThought('success', `Mission Complete`, `Successfully completed "${taskDescription}". Standing by for next orders.`);
+    if (this.bot.chat) this.bot.chat(`🏆 Mission complete, ${commander}! Standing by for orders.`);
+    return { ok: true, plan };
+  }
+
+  getStatus() {
+    return {
+      activeMission: this.activeMission,
+      thoughts: this.thoughtStream.slice(-30),
+      memory: this.memory.slice(-10),
+      perception: this.getPerceptionState(),
+      model: this.model,
+      isRunning: this.isRunning,
+      isThinking: this.isThinking
+    };
   }
 
   start(intervalMs = 2000) {

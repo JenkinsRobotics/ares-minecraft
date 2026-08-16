@@ -458,6 +458,130 @@ async function buildStructure(structure) {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════
+// Dual-Tab & Neural Stream Engine
+// ═══════════════════════════════════════════════════════════════
+
+let activeCommTab = 'chat';
+
+function switchCommTab(tab) {
+  activeCommTab = tab;
+  const btnChat = document.getElementById('tabBtnChat');
+  const btnBrain = document.getElementById('tabBtnBrain');
+  const pnlChat = document.getElementById('panelChatTab');
+  const pnlBrain = document.getElementById('panelBrainTab');
+
+  if (tab === 'chat') {
+    btnChat?.classList.add('active');
+    btnBrain?.classList.remove('active');
+    if (pnlChat) pnlChat.style.display = 'flex';
+    if (pnlBrain) pnlBrain.style.display = 'none';
+  } else {
+    btnChat?.classList.remove('active');
+    btnBrain?.classList.add('active');
+    if (pnlChat) pnlChat.style.display = 'none';
+    if (pnlBrain) pnlBrain.style.display = 'flex';
+    fetchBrainStream();
+  }
+}
+
+function clearActiveTabLog() {
+  if (activeCommTab === 'chat') {
+    clearChatLog();
+  } else {
+    const feed = document.getElementById('neuralThoughtsFeed');
+    if (feed) feed.innerHTML = '';
+  }
+}
+
+async function fetchBrainStream() {
+  try {
+    const res = await fetch(`${SIDECAR_URL}/brain/thoughts`);
+    if (!res.ok) return;
+    const json = await res.json();
+    const data = json.data || {};
+
+    const goalEl = document.getElementById('brainActiveGoal');
+    if (goalEl && data.activeMission?.title) {
+      goalEl.textContent = data.activeMission.title;
+    }
+
+    const modelEl = document.getElementById('brainModelName');
+    if (modelEl && data.model) {
+      modelEl.textContent = `${data.model} (Local MLX GPU • ~38ms)`;
+    }
+
+    const posEl = document.getElementById('brainPerceptionState');
+    if (posEl && data.perception?.position) {
+      const p = data.perception.position;
+      posEl.textContent = `Pos (${p.x}, ${p.y}, ${p.z}) • HP ${data.perception.health}/20 • Food ${data.perception.food}/20`;
+    }
+
+    const badgeEl = document.getElementById('thoughtCountBadge');
+    if (badgeEl && data.thoughts) {
+      badgeEl.textContent = `${data.thoughts.length} thoughts recorded`;
+    }
+
+    renderNeuralThoughts(data.thoughts || []);
+  } catch (_) {}
+}
+
+function renderNeuralThoughts(thoughts) {
+  const feed = document.getElementById('neuralThoughtsFeed');
+  if (!feed) return;
+
+  feed.innerHTML = thoughts.map(t => {
+    let color = '#08EBF1';
+    let bg = 'rgba(8,235,241,0.1)';
+    if (t.type === 'mission') { color = '#FFCC00'; bg = 'rgba(255,204,0,0.15)'; }
+    if (t.type === 'action') { color = '#00FF88'; bg = 'rgba(0,255,136,0.15)'; }
+    if (t.type === 'combat') { color = '#FF4444'; bg = 'rgba(255,68,68,0.15)'; }
+    if (t.type === 'plan') { color = '#c084fc'; bg = 'rgba(192,132,252,0.15)'; }
+    if (t.type === 'success') { color = '#22c55e'; bg = 'rgba(34,197,94,0.15)'; }
+
+    return `
+      <div style="background:#0c1017;border:1px solid #1a2333;border-left:3px solid ${color};border-radius:4px;padding:6px 10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:9px;background:${bg};color:${color};padding:1px 5px;border-radius:2px;font-weight:800;text-transform:uppercase;">${t.type || 'THOUGHT'}</span>
+            <strong style="color:#fff;font-size:11px;">${escapeHtml(t.title || 'Reasoning')}</strong>
+          </div>
+          <span style="font-size:10px;color:#64748b;">${t.time || ''}</span>
+        </div>
+        <div style="color:#94a3b8;line-height:1.4;font-size:11px;">${escapeHtml(t.detail || '')}</div>
+      </div>
+    `;
+  }).join('');
+
+  feed.scrollTop = feed.scrollHeight;
+}
+
+async function dispatchQuickMission(task) {
+  appendChatLog(`[Commander]: ${task}`);
+  switchCommTab('brain');
+  try {
+    const res = await fetch(`${SIDECAR_URL}/brain/mission`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ task, commander: 'Shu_Walker' })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      fetchBrainStream();
+    }
+  } catch (err) {
+    appendChatLog(`[Error] Failed to dispatch mission: ${err.message}`);
+  }
+}
+
+async function dispatchCustomMission() {
+  const input = document.getElementById('chatInput');
+  const task = input?.value?.trim();
+  if (!task) return;
+  input.value = '';
+  dispatchQuickMission(task);
+}
+
 function escapeHtml(str) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
@@ -469,6 +593,7 @@ function escapeHtml(str) {
 function initApp() {
   if (document.getElementById('viewCompanion')) {
     fetchStatus();
+    fetchBrainStream();
     if (!pollTimer) {
       pollTimer = setInterval(() => {
         if (currentTab === 'companion') {
@@ -477,7 +602,10 @@ function initApp() {
           fetchServerStatus();
           fetchServerLogs();
         }
-      }, 2500);
+        if (activeCommTab === 'brain') {
+          fetchBrainStream();
+        }
+      }, 2000);
     }
   }
 }

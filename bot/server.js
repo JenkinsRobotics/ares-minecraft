@@ -2630,6 +2630,12 @@ const httpServer = http.createServer(async (req, res) => {
         return respond(res, 200, { ok: true, data: { summary: summarizeSocialGraph(socialGraph), recent_events: socialEvents.slice(-20) } });
       }
 
+      if (path === '/brain/thoughts' || path === '/brain/status') {
+        if (!aresBrain && bot) aresBrain = new AresBrain(bot, serverManager);
+        const status = aresBrain ? aresBrain.getStatus() : { activeMission: null, thoughts: [] };
+        return respond(res, 200, { ok: true, data: status });
+      }
+
       if (path === '/chat') {
         const count = parseInt(url.searchParams.get('count') || '20');
         const clear = url.searchParams.get('clear') === 'true';
@@ -2764,6 +2770,15 @@ const httpServer = http.createServer(async (req, res) => {
       if (path === '/brain/stop') {
         if (aresBrain) aresBrain.stop();
         return respond(res, 200, { ok: true, result: 'ARES Autonomous Brain paused' });
+      }
+
+      if (path === '/brain/mission' || path === '/brain/task') {
+        const b = ensureBot();
+        if (!aresBrain) aresBrain = new AresBrain(b, serverManager);
+        const task = body.task || body.mission || body.command || '';
+        const commander = body.commander || 'Shu_Walker';
+        aresBrain.executeMission(task, commander).catch(e => log(`Mission error: ${e.message}`));
+        return respond(res, 200, { ok: true, result: `Mission "${task}" dispatched to ARES.` });
       }
 
       // Cancel current task
