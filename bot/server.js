@@ -54,6 +54,7 @@ import {
   summarizeSceneText,
 } from './lib/perception.js';
 import serverManager from './server-manager.js';
+import lanBroadcaster from './lan-broadcaster.js';
 
 // Per-bot locations file to prevent race conditions in multi-agent mode
 const DATA_DIR = path.join(path.dirname(decodeURIComponent(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'))), '..', 'data');
@@ -79,7 +80,7 @@ const config = {
     port: parseInt(process.env.MC_PORT || '25565'),
     username: process.env.MC_USERNAME || 'ARES',
     auth: process.env.MC_AUTH || 'offline',
-    version: process.env.MC_VERSION || '1.21.1',
+    version: process.env.MC_VERSION || '1.21.11',
   },
   api: {
     port: parseInt(process.env.API_PORT || '3847'),
@@ -354,7 +355,7 @@ async function createBot() {
   }
 
   return new Promise((resolve, reject) => {
-    log(`Connecting to ${config.mc.host}:${config.mc.port} as ${config.mc.username} (protocol ${config.mc.version})...`);
+    log(`Connecting to ${config.mc.host}:${config.mc.port} as ${config.mc.username}...`);
     
     bot = mineflayer.createBot({
       host: config.mc.host,
@@ -2906,6 +2907,9 @@ httpServer.listen(config.api.port, () => {
   log(`║  MC:   ${config.mc.host}:${config.mc.port}                ║`);
   log(`║  User: ${config.mc.username.padEnd(28)}║`);
   log(`╚═══════════════════════════════════════╝`);
+
+  // Start native Bedrock LAN auto-discovery broadcast
+  lanBroadcaster.start(() => (serverManager.statusCache?.playerCount || 0));
 
   // Connect bot
   createBot().catch(e => {

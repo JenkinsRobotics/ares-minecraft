@@ -245,38 +245,37 @@
 
         <!-- Multi-Device Join Cards -->
         <div style="margin-top:16px;">
-          <div class="section-subtitle" style="margin-bottom:10px;font-weight:700;letter-spacing:1px;color:#08EBF1;">CONNECT YOUR DEVICES (PS5 / IOS / PC)</div>
+          <div class="section-subtitle" style="margin-bottom:10px;font-weight:700;letter-spacing:1px;color:#08EBF1;">CONNECT YOUR DEVICES (PS5 / IOS / PC / FRIENDS)</div>
           
           <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:12px;">
-            <!-- iOS / Android Card -->
-            <div style="background:#0c1017;border:1px solid #1f2738;border-radius:8px;padding:12px;">
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                <span style="font-size:18px;">📱</span>
-                <span style="font-weight:700;font-size:13px;color:#fff;">iPhone / iPad / Android</span>
-              </div>
-              <div style="font-size:11px;color:#9aa5b8;line-height:1.4;margin-bottom:10px;">
-                1. In Minecraft, tap <strong>Play → Servers → Add Server</strong><br>
-                2. Server Name: <strong>ARES Rack</strong><br>
-                3. Address: <code style="color:#08EBF1;background:#141a26;padding:2px 4px;border-radius:3px;" id="srvJoinIosIp">10.15.0.239</code><br>
-                4. Port: <code style="color:#08EBF1;background:#141a26;padding:2px 4px;border-radius:3px;">19132</code>
-              </div>
-              <button class="sm-btn" onclick="navigator.clipboard.writeText('10.15.0.239:19132');alert('Copied 10.15.0.239:19132 to clipboard!');" style="width:100%;background:#192233;border:1px solid #28354d;color:#08EBF1;padding:6px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">📋 Copy Address & Port</button>
-            </div>
-
-            <!-- PS5 / Console Card -->
+            <!-- PS5 Native Auto-Detect Card -->
             <div style="background:#0c1017;border:1px solid #1f2738;border-radius:8px;padding:12px;">
               <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
                 <span style="font-size:18px;">🎮</span>
                 <span style="font-weight:700;font-size:13px;color:#fff;">PlayStation 5 (PS5)</span>
+                <span style="font-size:10px;background:rgba(0,255,136,0.15);color:#00FF88;padding:2px 6px;border-radius:3px;font-weight:700;">AUTO-DETECT</span>
               </div>
               <div style="font-size:11px;color:#9aa5b8;line-height:1.4;margin-bottom:10px;">
-                <strong>Method 1 (BedrockTogether App):</strong><br>
-                1. Open free <em>BedrockTogether</em> app on phone<br>
-                2. Enter <code style="color:#08EBF1;background:#141a26;padding:2px 4px;border-radius:3px;">10.15.0.239:19132</code> & tap <strong>Run</strong><br>
-                3. On PS5 Minecraft <strong>Friends</strong> tab, join the LAN game!<br>
-                <strong>Method 2 (DNS):</strong> Set PS5 DNS to <code style="color:#08EBF1;">104.238.130.180</code> & join any server.
+                <strong>⚡ Native LAN Discovery (No Apps / No DNS):</strong><br>
+                1. On PS5 Minecraft, go to <strong>Play → Friends</strong> tab<br>
+                2. Look under <strong>LAN Games</strong> — <strong style="color:#08EBF1;">ARES | Jenkins Rack</strong> will appear automatically!<br>
+                3. Click to join directly from your couch!
               </div>
               <button class="sm-btn" onclick="navigator.clipboard.writeText('10.15.0.239:19132');alert('Copied 10.15.0.239:19132 to clipboard!');" style="width:100%;background:#192233;border:1px solid #28354d;color:#08EBF1;padding:6px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">📋 Copy PS5 Bedrock IP</button>
+            </div>
+
+            <!-- iOS / iPad Card -->
+            <div style="background:#0c1017;border:1px solid #1f2738;border-radius:8px;padding:12px;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                <span style="font-size:18px;">📱</span>
+                <span style="font-weight:700;font-size:13px;color:#fff;">iPhone / iPad (iOS Bedrock)</span>
+              </div>
+              <div style="font-size:11px;color:#9aa5b8;line-height:1.4;margin-bottom:10px;">
+                <strong>Auto-Detect:</strong> Check <strong>Play → Friends → LAN Games</strong><br>
+                <strong>Manual Add:</strong> Tap <strong>Play → Servers → Add Server</strong><br>
+                Address: <code style="color:#08EBF1;background:#141a26;padding:2px 4px;border-radius:3px;" id="srvJoinIosIp">10.15.0.239</code> | Port: <code style="color:#08EBF1;background:#141a26;padding:2px 4px;border-radius:3px;">19132</code>
+              </div>
+              <button class="sm-btn" onclick="navigator.clipboard.writeText('10.15.0.239:19132');alert('Copied 10.15.0.239:19132 to clipboard!');" style="width:100%;background:#192233;border:1px solid #28354d;color:#08EBF1;padding:6px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">📋 Copy iOS Bedrock IP</button>
             </div>
 
             <!-- PC / Mac Java Card -->
@@ -291,6 +290,20 @@
                 3. Away from home (Tailscale): <code style="color:#08EBF1;">100.78.245.49:25565</code>
               </div>
               <button class="sm-btn" onclick="navigator.clipboard.writeText('10.15.0.239:25565');alert('Copied 10.15.0.239:25565 to clipboard!');" style="width:100%;background:#192233;border:1px solid #28354d;color:#08EBF1;padding:6px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">📋 Copy Java Address</button>
+            </div>
+
+            <!-- Public Global / Friends Card -->
+            <div style="background:#0c1017;border:1px solid rgba(8,235,241,0.3);border-radius:8px;padding:12px;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                <span style="font-size:18px;">🌍</span>
+                <span style="font-weight:700;font-size:13px;color:#08EBF1;">Play with Friends Anywhere</span>
+              </div>
+              <div style="font-size:11px;color:#9aa5b8;line-height:1.4;margin-bottom:10px;">
+                <strong>Global Public Address (Playit.gg Tunnel):</strong><br>
+                Share this address with friends anywhere in the world (no VPN or port forwarding needed):<br>
+                <code style="color:#00FF88;background:#141a26;padding:3px 6px;border-radius:3px;display:inline-block;margin-top:4px;font-weight:700;">nih-whoever.tun.ply.gg</code>
+              </div>
+              <button class="sm-btn" onclick="navigator.clipboard.writeText('nih-whoever.tun.ply.gg');alert('Copied Public Domain nih-whoever.tun.ply.gg to clipboard!');" style="width:100%;background:#08EBF1;border:none;color:#0a0d14;padding:6px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:700;">📋 Copy Public Address for Friends</button>
             </div>
           </div>
         </div>
