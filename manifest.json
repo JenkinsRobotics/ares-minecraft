@@ -13,14 +13,16 @@
     "agent_tools",
     "mcp"
   ],
+  "scripts": [
+    "dashboard/app.js"
+  ],
+  "stylesheets": [
+    "dashboard/style.css"
+  ],
   "sidecar": {
-    "name": "ares-minecraft-sidecar",
-    "command": "node",
-    "args": ["bot/server.js"],
-    "port": 3847,
-    "health_path": "/health",
-    "auto_start": true,
-    "restart_policy": "always"
+    "type": "loopback",
+    "origin": "http://127.0.0.1:3847",
+    "health_path": "/health"
   },
   "tab": {
     "id": "minecraft",

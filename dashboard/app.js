@@ -414,6 +414,7 @@ async function sendChatMsg() {
 
 function appendChatLog(text) {
   const feed = document.getElementById('chatFeed');
+  if (!feed) return;
   const div = document.createElement('div');
   div.className = 'chat-msg';
   div.textContent = text;
@@ -422,7 +423,8 @@ function appendChatLog(text) {
 }
 
 function clearChatLog() {
-  document.getElementById('chatFeed').innerHTML = '';
+  const feed = document.getElementById('chatFeed');
+  if (feed) feed.innerHTML = '';
 }
 
 function escapeHtml(str) {
@@ -430,17 +432,128 @@ function escapeHtml(str) {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// ARES WebUI Shell Integration (Rail & Sidebar)
+// ═══════════════════════════════════════════════════════════════
+
+function initAresWebUIIntegration() {
+  const rail = document.querySelector('.rail');
+  const sidebarNav = document.querySelector('.sidebar-nav');
+  if (!rail && !sidebarNav) return false;
+
+  // Avoid duplicate injection
+  if (document.querySelector('[data-panel="minecraft"]')) return true;
+
+  // Rail button (Desktop)
+  if (rail) {
+    const btn = document.createElement('button');
+    btn.className = 'rail-btn nav-tab has-tooltip';
+    btn.dataset.panel = 'minecraft';
+    btn.dataset.tooltip = 'Minecraft Companion & Server';
+    btn.setAttribute('aria-label', 'Minecraft');
+    btn.title = 'Minecraft Companion & PS5 Server';
+    btn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 18 3 22 9 12 22 2 9 6 3"/><line x1="2" y1="9" x2="22" y2="9"/><line x1="12" y1="22" x2="12" y2="9"/></svg>`;
+    
+    const spacer = rail.querySelector('.rail-spacer') || rail.querySelector('[data-panel="settings"]');
+    if (spacer) rail.insertBefore(btn, spacer);
+    else rail.appendChild(btn);
+
+    btn.addEventListener('click', () => openMinecraftPanel());
+  }
+
+  // Sidebar button (Mobile/Tablet)
+  if (sidebarNav) {
+    const btnMobile = document.createElement('button');
+    btnMobile.className = 'nav-tab has-tooltip has-tooltip--bottom';
+    btnMobile.dataset.panel = 'minecraft';
+    btnMobile.dataset.label = 'Minecraft';
+    btnMobile.dataset.tooltip = 'Minecraft';
+    btnMobile.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 18 3 22 9 12 22 2 9 6 3"/><line x1="2" y1="9" x2="22" y2="9"/><line x1="12" y1="22" x2="12" y2="9"/></svg>`;
+    
+    const settingsBtn = sidebarNav.querySelector('[data-panel="settings"]');
+    if (settingsBtn) sidebarNav.insertBefore(btnMobile, settingsBtn);
+    else sidebarNav.appendChild(btnMobile);
+
+    btnMobile.addEventListener('click', () => openMinecraftPanel());
+  }
+
+  // Create or mount the Minecraft Panel view container
+  if (!document.getElementById('panelMinecraft')) {
+    const panel = document.createElement('div');
+    panel.id = 'panelMinecraft';
+    panel.className = 'minecraft-ares-panel';
+    panel.style.display = 'none';
+    panel.style.position = 'fixed';
+    panel.style.top = '0';
+    panel.style.left = '64px';
+    panel.style.right = '0';
+    panel.style.bottom = '0';
+    panel.style.zIndex = '900';
+    panel.style.background = '#0a0d14';
+    panel.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:#0d121d;border-bottom:1px solid rgba(8,235,241,0.2);">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:18px;">🎮</span>
+          <span style="font-weight:700;color:#08EBF1;letter-spacing:1px;font-size:14px;">ARES MINECRAFT COMPANION & SERVER MANAGER</span>
+          <span style="font-size:11px;background:rgba(8,235,241,0.1);color:#08EBF1;border:1px solid rgba(8,235,241,0.3);padding:2px 8px;border-radius:4px;">PS5 Cross-Play Port 19132</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button id="closeMinecraftPanelBtn" style="background:#141c2b;color:#B8B3D0;border:1px solid #232b3e;border-radius:6px;padding:6px 14px;cursor:pointer;font-weight:600;font-size:12px;">✕ Close HUD</button>
+        </div>
+      </div>
+      <iframe src="/extensions/ares-minecraft/dashboard/index.html" style="width:100%;height:calc(100% - 50px);border:none;"></iframe>
+    `;
+    document.body.appendChild(panel);
+    
+    document.getElementById('closeMinecraftPanelBtn')?.addEventListener('click', () => {
+      panel.style.display = 'none';
+      document.querySelectorAll('.rail-btn.nav-tab, .sidebar-nav .nav-tab').forEach(b => {
+        if (b.dataset.panel === 'minecraft') b.classList.remove('active');
+        if (b.dataset.panel === 'chat') b.classList.add('active');
+      });
+    });
+  }
+
+  return true;
+}
+
+function openMinecraftPanel() {
+  const panel = document.getElementById('panelMinecraft');
+  if (!panel) return;
+  panel.style.display = 'block';
+  document.querySelectorAll('.rail-btn.nav-tab, .sidebar-nav .nav-tab').forEach(b => {
+    if (b.dataset.panel === 'minecraft') b.classList.add('active');
+    else b.classList.remove('active');
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
 // Initialization
 // ═══════════════════════════════════════════════════════════════
 
-document.addEventListener('DOMContentLoaded', () => {
-  fetchStatus();
-  pollTimer = setInterval(() => {
-    if (currentTab === 'companion') {
-      fetchStatus();
-    } else {
-      fetchServerStatus();
-      fetchServerLogs();
+function initApp() {
+  // If running inside ARES WebUI shell
+  if (initAresWebUIIntegration()) {
+    // Integration active
+  }
+
+  // If running inside standalone dashboard view
+  if (document.getElementById('viewCompanion')) {
+    fetchStatus();
+    if (!pollTimer) {
+      pollTimer = setInterval(() => {
+        if (currentTab === 'companion') {
+          fetchStatus();
+        } else {
+          fetchServerStatus();
+          fetchServerLogs();
+        }
+      }, 2500);
     }
-  }, 2500);
-});
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
