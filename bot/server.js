@@ -79,6 +79,9 @@ const config = {
     port: parseInt(process.env.MC_PORT || '25565'),
     username: process.env.MC_USERNAME || 'ARES',
     auth: process.env.MC_AUTH || 'offline',
+    // Paper 1.21.11 currently pings as "26.1.2"; mineflayer auto-detect
+    // treats that name as unknown. Pin the protocol when set.
+    version: process.env.MC_VERSION || '1.21.11',
   },
   api: {
     port: parseInt(process.env.API_PORT || '3847'),
@@ -94,6 +97,7 @@ for (let i = 2; i < process.argv.length; i++) {
   if (arg === '--mc-port' && next) { config.mc.port = parseInt(next); i++; }
   if (arg === '--username' && next) { config.mc.username = next; i++; }
   if (arg === '--auth' && next) { config.mc.auth = next; i++; }
+  if (arg === '--mc-version' && next) { config.mc.version = next; i++; }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -352,18 +356,22 @@ async function createBot() {
   }
 
   return new Promise((resolve, reject) => {
-    log(`Connecting to ${config.mc.host}:${config.mc.port} as ${config.mc.username}...`);
+    log(`Connecting to ${config.mc.host}:${config.mc.port} as ${config.mc.username} (protocol ${config.mc.version})...`);
     
     bot = mineflayer.createBot({
       host: config.mc.host,
       port: config.mc.port,
       username: config.mc.username,
       auth: config.mc.auth,
+      version: config.mc.version || false,
     });
 
     const timeout = setTimeout(() => {
+      try { bot?.removeAllListeners(); bot?.quit(); } catch {}
+      bot = null;
+      botReady = false;
       reject(new Error(`Connection timeout — couldn't reach ${config.mc.host}:${config.mc.port}`));
-    }, 30000);
+    }, 15000);
 
     bot.once('spawn', () => {
       clearTimeout(timeout);
@@ -2889,6 +2897,9 @@ httpServer.listen(config.api.port, () => {
     log('Bot server is running — POST /connect when Minecraft is ready.');
   });
 });
+
+// Keepalive heartbeat
+setInterval(() => {}, 1000 * 60 * 60);
 
 process.on('uncaughtException', (err) => {
   log(`Uncaught exception: ${err.message}`);
