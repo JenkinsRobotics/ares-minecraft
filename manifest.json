@@ -1,0 +1,86 @@
+{
+  "id": "ares-minecraft",
+  "name": "ARES Minecraft Companion",
+  "version": "1.0.0",
+  "description": "Embodied autonomous Minecraft AI companion powered by Mineflayer, dynamic pathfinding, and ARES.",
+  "author": "Jenkins Robotics",
+  "homepage": "https://github.com/Jenkins-Robotics/ares-minecraft",
+  "license": "MIT",
+  "category": "Gaming & Robotics",
+  "capabilities": [
+    "sidecar",
+    "dashboard_tab",
+    "agent_tools",
+    "mcp"
+  ],
+  "sidecar": {
+    "name": "ares-minecraft-sidecar",
+    "command": "node",
+    "args": ["bot/server.js"],
+    "port": 3847,
+    "health_path": "/health",
+    "auto_start": true,
+    "restart_policy": "always"
+  },
+  "tab": {
+    "id": "minecraft",
+    "label": "Minecraft",
+    "path": "/minecraft",
+    "entry": "dashboard/index.html",
+    "icon": "Gamepad2"
+  },
+  "tools": {
+    "module": "tools.minecraft",
+    "definitions": [
+      "mc_status",
+      "mc_chat",
+      "mc_move_to",
+      "mc_follow_player",
+      "mc_mine",
+      "mc_craft",
+      "mc_attack",
+      "mc_inventory",
+      "mc_save_location",
+      "mc_get_locations"
+    ]
+  },
+  "settings": {
+    "mc_server_host": {
+      "type": "string",
+      "default": "localhost",
+      "label": "Minecraft Server Host",
+      "description": "Hostname or IP address of the Minecraft server"
+    },
+    "mc_server_port": {
+      "type": "integer",
+      "default": 25565,
+      "label": "Minecraft Server Port",
+      "description": "Port number of the Minecraft server"
+    },
+    "mc_bot_username": {
+      "type": "string",
+      "default": "ARES",
+      "label": "Bot Username",
+      "description": "In-game character name for the bot"
+    },
+    "mc_auth_mode": {
+      "type": "enum",
+      "options": ["offline", "microsoft"],
+      "default": "offline",
+      "label": "Authentication Mode",
+      "description": "Offline (cracked/LAN) or official Microsoft Xbox Live login"
+    },
+    "mc_auto_eat": {
+      "type": "boolean",
+      "default": true,
+      "label": "Auto-Eat Food",
+      "description": "Automatically consume food when hunger drops"
+    },
+    "mc_auto_defend": {
+      "type": "boolean",
+      "default": true,
+      "label": "Auto-Defend Against Hostiles",
+      "description": "Automatically equip weapons and fight back against hostile mobs"
+    }
+  }
+}

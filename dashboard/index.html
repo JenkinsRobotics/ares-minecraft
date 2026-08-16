@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ARES Minecraft Companion HUD</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="hud-container">
+    <!-- Top Bar: Identity & Health -->
+    <header class="hud-header">
+      <div class="header-left">
+        <div class="bot-avatar-frame">
+          <img src="https://mc-heads.net/avatar/ARES/48" alt="Bot Head" class="bot-head-img" id="botHeadImg" onerror="this.src='https://mc-heads.net/avatar/Steve/48'">
+          <span class="status-indicator-dot online" id="statusDot"></span>
+        </div>
+        <div class="bot-meta">
+          <div class="bot-name-row">
+            <h1 class="bot-name" id="botName">ARES</h1>
+            <span class="hud-badge status-badge" id="statusBadge">CONNECTING...</span>
+            <span class="hud-badge dimension-badge" id="dimensionBadge">Overworld</span>
+          </div>
+          <div class="server-endpoint" id="serverEndpoint">Server: 127.0.0.1:25565</div>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <!-- Health Bar -->
+        <div class="vital-group">
+          <div class="vital-label-row">
+            <span class="vital-label">HEALTH</span>
+            <span class="vital-val" id="healthVal">20 / 20</span>
+          </div>
+          <div class="progress-bar-bg health-bar">
+            <div class="progress-bar-fill" id="healthFill" style="width: 100%;"></div>
+          </div>
+        </div>
+
+        <!-- Food / Hunger Bar -->
+        <div class="vital-group">
+          <div class="vital-label-row">
+            <span class="vital-label">HUNGER</span>
+            <span class="vital-val" id="foodVal">20 / 20</span>
+          </div>
+          <div class="progress-bar-bg food-bar">
+            <div class="progress-bar-fill" id="foodFill" style="width: 100%;"></div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Grid -->
+    <main class="hud-grid">
+      <!-- Left Column: Navigation, Coordinates & Radar -->
+      <section class="hud-card location-card">
+        <div class="card-header">
+          <div class="card-title">LOCATION & RADAR</div>
+          <button class="icon-btn" id="btnRefreshLoc" title="Refresh Position">⟳</button>
+        </div>
+
+        <div class="coords-display">
+          <div class="coord-box">
+            <span class="coord-axis">X</span>
+            <span class="coord-val" id="coordX">0.0</span>
+          </div>
+          <div class="coord-box">
+            <span class="coord-axis">Y</span>
+            <span class="coord-val" id="coordY">64.0</span>
+          </div>
+          <div class="coord-box">
+            <span class="coord-axis">Z</span>
+            <span class="coord-val" id="coordZ">0.0</span>
+          </div>
+        </div>
+
+        <div class="biome-heading-row">
+          <div class="mini-stat">
+            <span class="mini-label">HEADING:</span>
+            <span class="mini-val" id="headingVal">North (0°)</span>
+          </div>
+          <div class="mini-stat">
+            <span class="mini-label">BIOME:</span>
+            <span class="mini-val" id="biomeVal">Plains</span>
+          </div>
+        </div>
+
+        <!-- Player Radar -->
+        <div class="radar-section">
+          <div class="section-subtitle">NEARBY PLAYERS</div>
+          <div class="player-radar-list" id="playerRadarList">
+            <div class="player-row vip-player">
+              <img src="https://mc-heads.net/avatar/Shu_Walker/24" class="player-head" alt="Shu_Walker">
+              <div class="player-info">
+                <span class="player-name">Shu_Walker (Matthew)</span>
+                <span class="player-dist" id="distMatthew">Searching...</span>
+              </div>
+              <button class="mini-action-btn" onclick="followPlayer('Shu_Walker')">Follow</button>
+            </div>
+            <div class="player-row vip-player">
+              <img src="https://mc-heads.net/avatar/Blackstar3156/24" class="player-head" alt="Blackstar3156">
+              <div class="player-info">
+                <span class="player-name">Blackstar3156 (Sean)</span>
+                <span class="player-dist" id="distSean">Searching...</span>
+              </div>
+              <button class="mini-action-btn" onclick="followPlayer('Blackstar3156')">Follow</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Center Column: Quick Action Deck -->
+      <section class="hud-card actions-card">
+        <div class="card-header">
+          <div class="card-title">COMMAND DECK</div>
+          <span class="status-indicator" id="botActivity">IDLE</span>
+        </div>
+
+        <div class="command-grid">
+          <button class="cmd-btn cmd-follow" onclick="runCommand('follow_closest')">
+            <span class="cmd-icon">🏃</span>
+            <span class="cmd-text">Follow Me</span>
+          </button>
+          <button class="cmd-btn cmd-guard" onclick="runCommand('guard_here')">
+            <span class="cmd-icon">🛡️</span>
+            <span class="cmd-text">Guard Position</span>
+          </button>
+          <button class="cmd-btn cmd-mine" onclick="runCommand('mine_iron')">
+            <span class="cmd-icon">⛏️</span>
+            <span class="cmd-text">Mine Iron/Ores</span>
+          </button>
+          <button class="cmd-btn cmd-gather" onclick="runCommand('gather_wood')">
+            <span class="cmd-icon">🪓</span>
+            <span class="cmd-text">Chop Wood</span>
+          </button>
+          <button class="cmd-btn cmd-eat" onclick="runCommand('eat_food')">
+            <span class="cmd-icon">🍖</span>
+            <span class="cmd-text">Eat Food</span>
+          </button>
+          <button class="cmd-btn cmd-stop danger-btn" onclick="runCommand('stop')">
+            <span class="cmd-icon">🛑</span>
+            <span class="cmd-text">Stop All</span>
+          </button>
+        </div>
+
+        <!-- Custom Coordinate Move Input -->
+        <div class="custom-target-box">
+          <div class="section-subtitle">PATHFIND TO COORDINATES</div>
+          <div class="target-input-row">
+            <input type="number" id="targetX" placeholder="X" class="coord-input">
+            <input type="number" id="targetY" placeholder="Y" class="coord-input">
+            <input type="number" id="targetZ" placeholder="Z" class="coord-input">
+            <button class="btn-primary" onclick="goToCoords()">Go</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Inventory & Hotbar -->
+      <section class="hud-card inventory-card">
+        <div class="card-header">
+          <div class="card-title">INVENTORY & GEAR</div>
+          <span class="inv-count" id="invTotalCount">0 items</span>
+        </div>
+
+        <!-- Equipped Armor -->
+        <div class="equipped-gear-row">
+          <div class="gear-slot" id="slotHelmet" title="Helmet">🪖</div>
+          <div class="gear-slot" id="slotChest" title="Chestplate">🦺</div>
+          <div class="gear-slot" id="slotLegs" title="Leggings">👖</div>
+          <div class="gear-slot" id="slotBoots" title="Boots">🥾</div>
+          <div class="gear-slot" id="slotMainHand" title="Main Hand">⚔️</div>
+          <div class="gear-slot" id="slotOffHand" title="Off Hand">🛡️</div>
+        </div>
+
+        <!-- Hotbar / Inventory Grid -->
+        <div class="section-subtitle">HOTBAR & BAG</div>
+        <div class="inventory-grid" id="inventoryGrid">
+          <!-- Populated dynamically by app.js -->
+        </div>
+      </section>
+    </main>
+
+    <!-- Bottom Section: Live Minecraft Chat Feed -->
+    <footer class="hud-footer">
+      <div class="chat-panel">
+        <div class="chat-header">
+          <span class="chat-title">MINECRAFT SERVER CHAT & LOG</span>
+          <button class="icon-btn" onclick="clearChatLog()">Clear</button>
+        </div>
+        <div class="chat-feed" id="chatFeed">
+          <div class="chat-msg system-msg">[System] ARES Minecraft Sidecar ready. Connecting to world...</div>
+        </div>
+        <div class="chat-input-bar">
+          <input type="text" id="chatInput" placeholder="Send chat to Minecraft server..." onkeydown="if(event.key==='Enter') sendChatMsg()">
+          <button class="btn-primary" onclick="sendChatMsg()">Send</button>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
