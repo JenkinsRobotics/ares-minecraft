@@ -75,13 +75,11 @@ function saveLocations(locs) {
 
 const config = {
   mc: {
-    host: process.env.MC_HOST || 'localhost',
+    host: process.env.MC_HOST || '10.15.0.239',
     port: parseInt(process.env.MC_PORT || '25565'),
     username: process.env.MC_USERNAME || 'ARES',
     auth: process.env.MC_AUTH || 'offline',
-    // Paper 1.21.11 currently pings as "26.1.2"; mineflayer auto-detect
-    // treats that name as unknown. Pin the protocol when set.
-    version: process.env.MC_VERSION || '1.21.11',
+    version: process.env.MC_VERSION || '1.21.1',
   },
   api: {
     port: parseInt(process.env.API_PORT || '3847'),
@@ -2559,6 +2557,18 @@ const httpServer = http.createServer(async (req, res) => {
     // ── GET endpoints (observation) ──────────────
     if (req.method === 'GET') {
       if (path === '/health' || path === '/') {
+        let host = null;
+        try {
+          const srv = await serverManager.getStatus();
+          host = {
+            name: srv.host?.name,
+            lanIp: srv.lanIp || srv.host?.lanIp,
+            tailscaleIp: srv.tailscaleIp || srv.host?.tailscaleIp,
+            running: srv.running,
+            backend: srv.backend,
+            join: srv.join,
+          };
+        } catch (_) {}
         return respond(res, 200, {
           ok: true,
           connected: botReady,
@@ -2567,6 +2577,7 @@ const httpServer = http.createServer(async (req, res) => {
           mode: brainMode,
           brain_connected: brainMode === 'brain',
           brain_endpoint: brainMode === 'brain' ? brainEndpoint : undefined,
+          host,
         });
       }
 
@@ -2681,6 +2692,11 @@ const httpServer = http.createServer(async (req, res) => {
     // ── POST endpoints (actions) ────────────────
     if (req.method === 'POST') {
       const body = await parseBody(req);
+
+      if (path === '/chat') {
+        const result = await ACTIONS.chat({ message: body.message || body.text || '' });
+        return respond(res, 200, { ok: true, ...result, state: briefState() });
+      }
 
       // ── Server Manager Actions ────────────────
       if (path === '/api/server/start' || path === '/server/start') {

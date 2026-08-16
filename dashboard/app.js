@@ -210,32 +210,44 @@ function renderServerStatus(data) {
     badge.className = 'hud-badge status-badge online';
     badge.style.color = '#00FF88';
     badge.style.borderColor = '#00FF88';
-    btnStart.disabled = true;
-    btnStop.disabled = false;
-    btnRestart.disabled = false;
+    if (btnStart) btnStart.disabled = true;
+    if (btnStop) btnStop.disabled = false;
+    if (btnRestart) btnRestart.disabled = false;
   } else {
-    badge.textContent = data.status === 'no_docker' ? 'DOCKER MISSING' : 'OFFLINE';
+    badge.textContent = data.status === 'no_docker' ? 'DOCKER MISSING' : (data.status === 'rack_unreachable' ? 'RACK UNREACHABLE' : 'OFFLINE');
     badge.className = 'hud-badge status-badge offline';
     badge.style.color = '#FF4444';
     badge.style.borderColor = '#FF4444';
-    btnStart.disabled = false;
-    btnStop.disabled = true;
-    btnRestart.disabled = true;
+    if (btnStart) btnStart.disabled = false;
+    if (btnStop) btnStop.disabled = true;
+    if (btnRestart) btnRestart.disabled = true;
   }
 
-  document.getElementById('srvCpuVal').textContent = data.cpu || '0%';
-  document.getElementById('srvMemVal').textContent = data.memory || '0 MB';
-  document.getElementById('srvPlayersVal').textContent = data.playerCount !== undefined ? `${data.playerCount} players` : '0';
-  document.getElementById('srvLanIp').textContent = data.lanIp || '127.0.0.1';
-  document.getElementById('srvJavaPort').textContent = `${data.javaPort || 25565} (TCP)`;
-  document.getElementById('srvBedrockPort').textContent = `${data.bedrockPort || 19132} (UDP)`;
+  const hostName = (data.host && data.host.name) || (data.backend === 'rack' ? 'RackPC001 (Jenkins Rack)' : 'Local Host');
+  const hostIp = (data.host && data.host.lanIp) || data.lanIp || '10.15.0.239';
+  if (document.getElementById('srvHostName')) document.getElementById('srvHostName').textContent = hostName;
+  if (document.getElementById('srvHostIp')) document.getElementById('srvHostIp').textContent = hostIp;
+  if (document.getElementById('srvBackendType')) document.getElementById('srvBackendType').textContent = data.backend === 'rack' ? 'Rack PC (Live)' : 'Docker Fallback';
+  if (document.getElementById('srvMemVal')) document.getElementById('srvMemVal').textContent = data.memory || '1.75 GB';
+  if (document.getElementById('srvPlayersVal')) document.getElementById('srvPlayersVal').textContent = `${data.playerCount || 0} players`;
+  if (document.getElementById('srvEngineVal')) document.getElementById('srvEngineVal').textContent = data.version || 'Paper 1.21.11';
+  if (document.getElementById('srvJoinIosIp')) document.getElementById('srvJoinIosIp').textContent = hostIp;
+  if (document.getElementById('srvJoinJavaIp')) document.getElementById('srvJoinJavaIp').textContent = `${hostIp}:${data.javaPort || 25565}`;
 }
 
 function renderServerOffline(errMsg) {
   const badge = document.getElementById('srvStatusBadge');
-  badge.textContent = 'UNREACHABLE';
-  badge.style.color = '#FF4444';
-  badge.style.borderColor = '#FF4444';
+  if (badge) {
+    badge.textContent = 'UNREACHABLE';
+    badge.style.color = '#FF4444';
+    badge.style.borderColor = '#FF4444';
+  }
+}
+
+async function sendQuickCommand(cmd) {
+  const input = document.getElementById('consoleInput');
+  if (input) input.value = cmd;
+  await sendConsoleCommand();
 }
 
 async function startServer() {

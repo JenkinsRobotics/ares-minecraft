@@ -38,7 +38,7 @@ MCP_TOOLS = [
     },
     {
         "name": "mc_server_status",
-        "description": "Get Minecraft server lifecycle, online/offline status, RAM, CPU, players, and PS5 Bedrock cross-play status.",
+        "description": "Get Minecraft server lifecycle, rack-PC host, online/offline status, RAM, CPU, players, and iOS/PS5 join instructions.",
         "inputSchema": {"type": "object", "properties": {}},
     },
     {

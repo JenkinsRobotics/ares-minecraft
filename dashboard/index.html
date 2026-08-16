@@ -202,8 +202,20 @@
       <!-- Server Status & Control -->
       <section class="hud-card server-status-card">
         <div class="card-header">
-          <div class="card-title">SERVER LIFECYCLE & HEALTH</div>
-          <span class="hud-badge" id="srvStatusBadge">OFFLINE</span>
+          <div class="card-title">SERVER LIFECYCLE & RACK PC STATUS</div>
+          <span class="hud-badge" id="srvStatusBadge">ONLINE</span>
+        </div>
+
+        <!-- Host PC Info Banner -->
+        <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(8,235,241,0.06);border:1px solid rgba(8,235,241,0.2);padding:10px 14px;border-radius:8px;margin-bottom:14px;">
+          <div>
+            <div style="font-size:11px;color:#7e8b9f;font-weight:600;">ACTIVE HOST</div>
+            <div style="font-size:14px;font-weight:700;color:#08EBF1;" id="srvHostName">RackPC001 (Jenkins Rack)</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:11px;color:#7e8b9f;font-weight:600;">RACK LAN IP</div>
+            <div style="font-size:13px;font-weight:700;color:#fff;font-family:monospace;" id="srvHostIp">10.15.0.239</div>
+          </div>
         </div>
 
         <div class="server-control-row">
@@ -214,45 +226,72 @@
 
         <div class="metrics-grid">
           <div class="metric-card">
-            <span class="metric-label">CPU USAGE</span>
-            <span class="metric-val" id="srvCpuVal">0%</span>
+            <span class="metric-label">HOST STATUS</span>
+            <span class="metric-val highlight" id="srvBackendType" style="color:#00FF88;">Rack PC (Online)</span>
           </div>
           <div class="metric-card">
             <span class="metric-label">MEMORY USAGE</span>
-            <span class="metric-val" id="srvMemVal">0 MB</span>
+            <span class="metric-val" id="srvMemVal">1.75 GB</span>
           </div>
           <div class="metric-card">
             <span class="metric-label">ONLINE PLAYERS</span>
-            <span class="metric-val" id="srvPlayersVal">0</span>
+            <span class="metric-val" id="srvPlayersVal">0 players</span>
           </div>
           <div class="metric-card">
-            <span class="metric-label">SERVER TYPE</span>
-            <span class="metric-val highlight">Paper + GeyserMC</span>
+            <span class="metric-label">SERVER ENGINE</span>
+            <span class="metric-val highlight" id="srvEngineVal">Paper 1.21.11</span>
           </div>
         </div>
 
-        <!-- PS5 & Console Cross-Play Banner -->
-        <div class="crossplay-card">
-          <div class="crossplay-header">
-            <span class="crossplay-icon">🎮</span>
-            <span class="crossplay-title">PS5 & BEDROCK CROSS-PLAY READY</span>
-          </div>
-          <div class="crossplay-body">
-            <div class="crossplay-item">
-              <span class="lbl">LAN IP:</span>
-              <span class="val" id="srvLanIp">Detecting...</span>
+        <!-- Multi-Device Join Cards -->
+        <div style="margin-top:16px;">
+          <div class="section-subtitle" style="margin-bottom:10px;font-weight:700;letter-spacing:1px;color:#08EBF1;">CONNECT YOUR DEVICES (PS5 / IOS / PC)</div>
+          
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:12px;">
+            <!-- iOS / Android Card -->
+            <div style="background:#0c1017;border:1px solid #1f2738;border-radius:8px;padding:12px;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                <span style="font-size:18px;">📱</span>
+                <span style="font-weight:700;font-size:13px;color:#fff;">iPhone / iPad / Android</span>
+              </div>
+              <div style="font-size:11px;color:#9aa5b8;line-height:1.4;margin-bottom:10px;">
+                1. In Minecraft, tap <strong>Play → Servers → Add Server</strong><br>
+                2. Server Name: <strong>ARES Rack</strong><br>
+                3. Address: <code style="color:#08EBF1;background:#141a26;padding:2px 4px;border-radius:3px;" id="srvJoinIosIp">10.15.0.239</code><br>
+                4. Port: <code style="color:#08EBF1;background:#141a26;padding:2px 4px;border-radius:3px;">19132</code>
+              </div>
+              <button class="sm-btn" onclick="navigator.clipboard.writeText('10.15.0.239:19132');alert('Copied 10.15.0.239:19132 to clipboard!');" style="width:100%;background:#192233;border:1px solid #28354d;color:#08EBF1;padding:6px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">📋 Copy Address & Port</button>
             </div>
-            <div class="crossplay-item">
-              <span class="lbl">Java Port (ARES/PC):</span>
-              <span class="val" id="srvJavaPort">25565 (TCP)</span>
+
+            <!-- PS5 / Console Card -->
+            <div style="background:#0c1017;border:1px solid #1f2738;border-radius:8px;padding:12px;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                <span style="font-size:18px;">🎮</span>
+                <span style="font-weight:700;font-size:13px;color:#fff;">PlayStation 5 (PS5)</span>
+              </div>
+              <div style="font-size:11px;color:#9aa5b8;line-height:1.4;margin-bottom:10px;">
+                <strong>Method 1 (BedrockTogether App):</strong><br>
+                1. Open free <em>BedrockTogether</em> app on phone<br>
+                2. Enter <code style="color:#08EBF1;background:#141a26;padding:2px 4px;border-radius:3px;">10.15.0.239:19132</code> & tap <strong>Run</strong><br>
+                3. On PS5 Minecraft <strong>Friends</strong> tab, join the LAN game!<br>
+                <strong>Method 2 (DNS):</strong> Set PS5 DNS to <code style="color:#08EBF1;">104.238.130.180</code> & join any server.
+              </div>
+              <button class="sm-btn" onclick="navigator.clipboard.writeText('10.15.0.239:19132');alert('Copied 10.15.0.239:19132 to clipboard!');" style="width:100%;background:#192233;border:1px solid #28354d;color:#08EBF1;padding:6px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">📋 Copy PS5 Bedrock IP</button>
             </div>
-            <div class="crossplay-item">
-              <span class="lbl">Bedrock Port (PS5):</span>
-              <span class="val" id="srvBedrockPort">19132 (UDP)</span>
+
+            <!-- PC / Mac Java Card -->
+            <div style="background:#0c1017;border:1px solid #1f2738;border-radius:8px;padding:12px;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                <span style="font-size:18px;">💻</span>
+                <span style="font-weight:700;font-size:13px;color:#fff;">PC / Mac (Java Edition)</span>
+              </div>
+              <div style="font-size:11px;color:#9aa5b8;line-height:1.4;margin-bottom:10px;">
+                1. In Minecraft Java, click <strong>Multiplayer → Direct Connect</strong><br>
+                2. Server Address: <code style="color:#08EBF1;background:#141a26;padding:2px 4px;border-radius:3px;" id="srvJoinJavaIp">10.15.0.239:25565</code><br>
+                3. Away from home (Tailscale): <code style="color:#08EBF1;">100.78.245.49:25565</code>
+              </div>
+              <button class="sm-btn" onclick="navigator.clipboard.writeText('10.15.0.239:25565');alert('Copied 10.15.0.239:25565 to clipboard!');" style="width:100%;background:#192233;border:1px solid #28354d;color:#08EBF1;padding:6px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">📋 Copy Java Address</button>
             </div>
-          </div>
-          <div class="crossplay-hint">
-            💡 <strong>PS5 Joining:</strong> Open Minecraft on PS5 $\rightarrow$ <em>Play</em> $\rightarrow$ <em>Friends</em> tab $\rightarrow$ Look under <strong>LAN Games</strong>!
           </div>
         </div>
       </section>
@@ -317,7 +356,18 @@
         </div>
 
         <div class="console-output" id="consoleOutput">
-          <div class="console-line system">[ServerManager] Ready. Start the server to stream logs...</div>
+          <div class="console-line system">[ServerManager] Ready. Streaming logs from Rack PC (C:\MinecraftServer\logs\latest.log)...</div>
+        </div>
+
+        <!-- Quick RCON action chips -->
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;">
+          <button class="sm-btn" onclick="sendQuickCommand('time set day')" style="background:#192233;border:1px solid #28354d;color:#08EBF1;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">☀️ /time set day</button>
+          <button class="sm-btn" onclick="sendQuickCommand('weather clear')" style="background:#192233;border:1px solid #28354d;color:#08EBF1;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">🌤️ /weather clear</button>
+          <button class="sm-btn" onclick="sendQuickCommand('difficulty peaceful')" style="background:#192233;border:1px solid #28354d;color:#08EBF1;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">🕊️ /difficulty peaceful</button>
+          <button class="sm-btn" onclick="sendQuickCommand('difficulty normal')" style="background:#192233;border:1px solid #28354d;color:#08EBF1;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">⚔️ /difficulty normal</button>
+          <button class="sm-btn" onclick="sendQuickCommand('gamemode creative @a')" style="background:#192233;border:1px solid #28354d;color:#08EBF1;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">🧱 /gamemode creative</button>
+          <button class="sm-btn" onclick="sendQuickCommand('gamemode survival @a')" style="background:#192233;border:1px solid #28354d;color:#08EBF1;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">❤️ /gamemode survival</button>
+          <button class="sm-btn" onclick="sendQuickCommand('list')" style="background:#192233;border:1px solid #28354d;color:#08EBF1;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">👥 /list</button>
         </div>
 
         <div class="console-input-row">
