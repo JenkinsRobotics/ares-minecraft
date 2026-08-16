@@ -265,6 +265,7 @@ function getMemoryHints(limit = 4) {
 
 // Handle incoming chat message with routing
 async function handleChat(username, message) {
+  if (!username || username === 'Rcon' || username === 'Server' || username === 'Console' || username === bot?.username) return;
   const knownNames = buildKnownNames(getMyName(), getNearbyPlayerNames());
   const routing = parseMessageRouting(message, { knownNames });
   let forMe = isMessageForMe(routing, getMyName());
