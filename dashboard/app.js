@@ -574,6 +574,19 @@ async function dispatchQuickMission(task) {
   }
 }
 
+async function dispatchDirectTask() {
+  const input = document.getElementById('directTaskInput');
+  const task = input?.value?.trim();
+  if (!task) return;
+  input.value = '';
+  await dispatchQuickMission(task);
+}
+
+function clearThoughtsLog() {
+  const feed = document.getElementById('neuralThoughtsFeed');
+  if (feed) feed.innerHTML = '';
+}
+
 async function dispatchCustomMission() {
   const input = document.getElementById('chatInput');
   const task = input?.value?.trim();
