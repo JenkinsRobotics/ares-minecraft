@@ -33,6 +33,13 @@
     "module": "tools.minecraft",
     "definitions": [
       "mc_status",
+      "mc_server_status",
+      "mc_server_start",
+      "mc_server_stop",
+      "mc_server_restart",
+      "mc_server_config",
+      "mc_server_command",
+      "mc_server_logs",
       "mc_chat",
       "mc_move_to",
       "mc_follow_player",
@@ -54,8 +61,26 @@
     "mc_server_port": {
       "type": "integer",
       "default": 25565,
-      "label": "Minecraft Server Port",
-      "description": "Port number of the Minecraft server"
+      "label": "Minecraft Java Port",
+      "description": "Java Edition port (default: 25565)"
+    },
+    "mc_bedrock_port": {
+      "type": "integer",
+      "default": 19132,
+      "label": "Bedrock / PS5 Port (UDP)",
+      "description": "Geyser Bedrock port for PS5, Xbox, Switch, Mobile (default: 19132)"
+    },
+    "mc_server_memory": {
+      "type": "string",
+      "default": "4G",
+      "label": "Server Memory Allocation",
+      "description": "RAM allocated to the server (e.g. 4G, 8G, 16G)"
+    },
+    "mc_crossplay_enabled": {
+      "type": "boolean",
+      "default": true,
+      "label": "Enable PS5 / Bedrock Cross-Play",
+      "description": "Automatically bundles GeyserMC and Floodgate for console cross-play"
     },
     "mc_bot_username": {
       "type": "string",

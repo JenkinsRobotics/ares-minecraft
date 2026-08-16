@@ -19,6 +19,13 @@ from tools.minecraft import (
     mc_mine,
     mc_move_to,
     mc_save_location,
+    mc_server_command,
+    mc_server_config,
+    mc_server_logs,
+    mc_server_restart,
+    mc_server_start,
+    mc_server_status,
+    mc_server_stop,
     mc_status,
     mc_whisper,
 )
@@ -28,6 +35,42 @@ MCP_TOOLS = [
         "name": "mc_status",
         "description": "Get current Minecraft bot status, health, hunger, coordinates, and nearby players.",
         "inputSchema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "mc_server_status",
+        "description": "Get Minecraft server lifecycle, online/offline status, RAM, CPU, players, and PS5 Bedrock cross-play status.",
+        "inputSchema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "mc_server_start",
+        "description": "Start the Paper + GeyserMC + Floodgate cross-play Minecraft server.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "memory": {"type": "string", "description": "RAM allocation (e.g. 4G)", "default": "4G"},
+                "difficulty": {"type": "string", "description": "Difficulty (peaceful/easy/normal/hard)", "default": "normal"},
+                "gamemode": {"type": "string", "description": "Gamemode (survival/creative)", "default": "survival"},
+            },
+        },
+    },
+    {
+        "name": "mc_server_stop",
+        "description": "Stop the Minecraft server cleanly.",
+        "inputSchema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "mc_server_restart",
+        "description": "Restart the Minecraft server.",
+        "inputSchema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "mc_server_command",
+        "description": "Send an administrative RCON console command to the server (e.g. 'op Shu_Walker', 'time set day').",
+        "inputSchema": {
+            "type": "object",
+            "properties": {"command": {"type": "string", "description": "Command string"}},
+            "required": ["command"],
+        },
     },
     {
         "name": "mc_chat",
@@ -95,6 +138,11 @@ MCP_TOOLS = [
 def handle_tool_call(name: str, arguments: dict[str, Any]) -> dict[str, Any]:
     tool_map = {
         "mc_status": lambda args: mc_status(),
+        "mc_server_status": lambda args: mc_server_status(),
+        "mc_server_start": lambda args: mc_server_start(args.get("memory", "4G"), args.get("difficulty", "normal"), args.get("gamemode", "survival")),
+        "mc_server_stop": lambda args: mc_server_stop(),
+        "mc_server_restart": lambda args: mc_server_restart(),
+        "mc_server_command": lambda args: mc_server_command(args.get("command", "")),
         "mc_chat": lambda args: mc_chat(args.get("message", "")),
         "mc_whisper": lambda args: mc_whisper(args.get("player", ""), args.get("message", "")),
         "mc_move_to": lambda args: mc_move_to(args.get("x", 0), args.get("y", 64), args.get("z", 0)),

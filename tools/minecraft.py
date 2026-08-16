@@ -94,3 +94,56 @@ def mc_save_location(name: str) -> dict[str, Any]:
 def mc_get_locations() -> dict[str, Any]:
     """Retrieve all saved landmark waypoints and coordinates."""
     return _http_request("/locations")
+
+
+def mc_server_status() -> dict[str, Any]:
+    """Get the Minecraft server lifecycle status, RAM/CPU metrics, player count, and PS5 Bedrock cross-play status."""
+    return _http_request("/api/server/status")
+
+
+def mc_server_start(
+    memory: str = "4G",
+    difficulty: str = "normal",
+    gamemode: str = "survival",
+    motd: str = "ARES Companion Server [PS5 Cross-Play]",
+    seed: str = "",
+) -> dict[str, Any]:
+    """Start or spawn the Paper + GeyserMC + Floodgate Cross-Play Minecraft server."""
+    payload = {
+        "memory": memory,
+        "difficulty": difficulty,
+        "gamemode": gamemode,
+        "motd": motd,
+        "seed": seed,
+    }
+    return _http_request("/api/server/start", method="POST", payload=payload)
+
+
+def mc_server_stop() -> dict[str, Any]:
+    """Gracefully stop the Minecraft server."""
+    return _http_request("/api/server/stop", method="POST", payload={})
+
+
+def mc_server_restart() -> dict[str, Any]:
+    """Gracefully restart the Minecraft server."""
+    return _http_request("/api/server/restart", method="POST", payload={})
+
+
+def mc_server_config(key: str | None = None, value: Any = None) -> dict[str, Any]:
+    """Get all server configuration properties or update a specific property (e.g. difficulty, motd, gamemode, maxPlayers)."""
+    if key is not None and value is not None:
+        return _http_request("/api/server/config", method="POST", payload={str(key): value})
+    return _http_request("/api/server/config")
+
+
+def mc_server_command(command: str) -> dict[str, Any]:
+    """Send an administrative RCON console command to the Minecraft server (e.g. 'op Shu_Walker', 'time set day')."""
+    if not command:
+        return {"ok": False, "error": "Command is required"}
+    return _http_request("/api/server/command", method="POST", payload={"command": str(command).strip()})
+
+
+def mc_server_logs(limit: int = 50) -> dict[str, Any]:
+    """Get the most recent console logs from the running Minecraft server."""
+    return _http_request(f"/api/server/logs?limit={int(limit)}")
+

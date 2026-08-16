@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ARES Minecraft Companion HUD</title>
+  <title>ARES Minecraft Companion & Server Manager</title>
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,7 +11,7 @@
 </head>
 <body>
   <div class="hud-container">
-    <!-- Top Bar: Identity & Health -->
+    <!-- Top Bar: Navigation Tabs & Health -->
     <header class="hud-header">
       <div class="header-left">
         <div class="bot-avatar-frame">
@@ -28,7 +28,17 @@
         </div>
       </div>
 
-      <div class="header-right">
+      <!-- Navigation Tabs -->
+      <div class="nav-tabs-wrapper">
+        <button class="nav-tab active" id="tabBtnCompanion" onclick="switchTab('companion')">
+          <span class="nav-icon">🎮</span> Companion HUD
+        </button>
+        <button class="nav-tab" id="tabBtnServer" onclick="switchTab('server')">
+          <span class="nav-icon">🖥️</span> Server Manager & PS5
+        </button>
+      </div>
+
+      <div class="header-right" id="vitalsContainer">
         <!-- Health Bar -->
         <div class="vital-group">
           <div class="vital-label-row">
@@ -53,8 +63,10 @@
       </div>
     </header>
 
-    <!-- Main Grid -->
-    <main class="hud-grid">
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- VIEW 1: COMPANION HUD                                       -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <main class="hud-grid" id="viewCompanion">
       <!-- Left Column: Navigation, Coordinates & Radar -->
       <section class="hud-card location-card">
         <div class="card-header">
@@ -179,6 +191,139 @@
         <div class="section-subtitle">HOTBAR & BAG</div>
         <div class="inventory-grid" id="inventoryGrid">
           <!-- Populated dynamically by app.js -->
+        </div>
+      </section>
+    </main>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- VIEW 2: SERVER MANAGER & PS5 CROSS-PLAY                     -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <main class="hud-grid server-manager-grid" id="viewServer" style="display:none;">
+      <!-- Server Status & Control -->
+      <section class="hud-card server-status-card">
+        <div class="card-header">
+          <div class="card-title">SERVER LIFECYCLE & HEALTH</div>
+          <span class="hud-badge" id="srvStatusBadge">OFFLINE</span>
+        </div>
+
+        <div class="server-control-row">
+          <button class="btn-action btn-start" id="btnStartServer" onclick="startServer()">▶ Start Server</button>
+          <button class="btn-action btn-stop" id="btnStopServer" onclick="stopServer()">⏹ Stop Server</button>
+          <button class="btn-action btn-restart" id="btnRestartServer" onclick="restartServer()">🔄 Restart</button>
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <span class="metric-label">CPU USAGE</span>
+            <span class="metric-val" id="srvCpuVal">0%</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">MEMORY USAGE</span>
+            <span class="metric-val" id="srvMemVal">0 MB</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">ONLINE PLAYERS</span>
+            <span class="metric-val" id="srvPlayersVal">0</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">SERVER TYPE</span>
+            <span class="metric-val highlight">Paper + GeyserMC</span>
+          </div>
+        </div>
+
+        <!-- PS5 & Console Cross-Play Banner -->
+        <div class="crossplay-card">
+          <div class="crossplay-header">
+            <span class="crossplay-icon">🎮</span>
+            <span class="crossplay-title">PS5 & BEDROCK CROSS-PLAY READY</span>
+          </div>
+          <div class="crossplay-body">
+            <div class="crossplay-item">
+              <span class="lbl">LAN IP:</span>
+              <span class="val" id="srvLanIp">Detecting...</span>
+            </div>
+            <div class="crossplay-item">
+              <span class="lbl">Java Port (ARES/PC):</span>
+              <span class="val" id="srvJavaPort">25565 (TCP)</span>
+            </div>
+            <div class="crossplay-item">
+              <span class="lbl">Bedrock Port (PS5):</span>
+              <span class="val" id="srvBedrockPort">19132 (UDP)</span>
+            </div>
+          </div>
+          <div class="crossplay-hint">
+            💡 <strong>PS5 Joining:</strong> Open Minecraft on PS5 $\rightarrow$ <em>Play</em> $\rightarrow$ <em>Friends</em> tab $\rightarrow$ Look under <strong>LAN Games</strong>!
+          </div>
+        </div>
+      </section>
+
+      <!-- Server Settings Editor -->
+      <section class="hud-card server-config-card">
+        <div class="card-header">
+          <div class="card-title">SERVER & WORLD SETTINGS</div>
+          <button class="btn-primary" onclick="saveServerConfig()">Save Settings</button>
+        </div>
+
+        <div class="config-form">
+          <div class="form-group">
+            <label for="cfgMotd">Server Description (MOTD)</label>
+            <input type="text" id="cfgMotd" class="form-input" placeholder="ARES Companion Server">
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="cfgDifficulty">Difficulty</label>
+              <select id="cfgDifficulty" class="form-select">
+                <option value="peaceful">Peaceful</option>
+                <option value="easy">Easy</option>
+                <option value="normal" selected>Normal</option>
+                <option value="hard">Hard</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="cfgGamemode">Gamemode</label>
+              <select id="cfgGamemode" class="form-select">
+                <option value="survival" selected>Survival</option>
+                <option value="creative">Creative</option>
+                <option value="adventure">Adventure</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="cfgMaxPlayers">Max Players</label>
+              <input type="number" id="cfgMaxPlayers" class="form-input" value="20" min="1" max="100">
+            </div>
+            <div class="form-group">
+              <label for="cfgSeed">World Seed (Optional)</label>
+              <input type="text" id="cfgSeed" class="form-input" placeholder="Random or Custom Seed">
+            </div>
+          </div>
+
+          <div class="form-group checkbox-group">
+            <label>
+              <input type="checkbox" id="cfgPvp" checked> Enable PvP (Player vs Player)
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- Live Server Console & RCON Terminal -->
+      <section class="hud-card server-console-card">
+        <div class="card-header">
+          <div class="card-title">SERVER CONSOLE & RCON</div>
+          <button class="icon-btn" onclick="fetchServerLogs()">⟳ Refresh</button>
+        </div>
+
+        <div class="console-output" id="consoleOutput">
+          <div class="console-line system">[ServerManager] Ready. Start the server to stream logs...</div>
+        </div>
+
+        <div class="console-input-row">
+          <span class="console-prompt">&gt;</span>
+          <input type="text" id="consoleInput" placeholder="Enter server command (e.g. op Shu_Walker, time set day)..." onkeydown="if(event.key==='Enter') sendConsoleCommand()">
+          <button class="btn-primary" onclick="sendConsoleCommand()">Execute</button>
         </div>
       </section>
     </main>

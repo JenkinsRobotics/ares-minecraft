@@ -11,9 +11,10 @@
 ## 🌟 Key Features
 
 * **Embodied AI Companion**: Moves, explores, mines, crafts, eats, and fights with genuine initiative and autonomy.
-* **ARES WebUI Dashboard**: Embedded live HUD featuring real-time health, hunger, 3D coordinates, equipped armor, inventory grid, and nearby player radar.
+* **Server Manager & PS5 Cross-Play**: One-click Paper server hosting with **GeyserMC** & **Floodgate** cross-play enabling PS5, Xbox, Switch, and Mobile players to play with ARES.
+* **ARES WebUI Dashboard**: Embedded live HUD featuring Companion HUD (health, hunger, 3D coordinates, equipped armor, inventory grid, player radar) and dedicated Server Manager tab.
 * **Player Recognition**: Recognizes friends and VIP players (**Matthew / Shu_Walker** and **Sean / Blackstar3156**), auto-whispers, and follows orders.
-* **Agent Tool Suite (`mc_*`)**: Exposes native Python and MCP tool bindings (`mc_status`, `mc_move_to`, `mc_mine`, `mc_follow_player`, `mc_craft`, `mc_attack`, `mc_chat`).
+* **Agent Tool Suite (`mc_*`)**: Exposes native Python and MCP tool bindings for both gameplay (`mc_mine`, `mc_follow_player`) and server operations (`mc_server_status`, `mc_server_start`, `mc_server_command`).
 * **Model Context Protocol (MCP)**: Native stdio MCP server for seamless integration with external AI agent runtimes (ARES, Jaeger AI, Claude Code, Cursor).
 * **Self-Healing Sidecar Service**: Runs as a managed local daemon on port `3847` with health-probe endpoints and automated reconnect.
 
@@ -27,17 +28,18 @@ ares-minecraft/
 ├── README.md                  # Documentation & Quickstart
 ├── LICENSE                    # MIT License
 ├── dashboard/                 # Embedded WebUI Dashboard Panel
-│   ├── index.html             # Live Bot HUD (Health, Hunger, Coordinates, Inventory, Chat)
-│   ├── app.js                 # Realtime status poller & command dispatcher
+│   ├── index.html             # Live Bot HUD + Server Manager & PS5 Cross-Play Panel
+│   ├── app.js                 # Realtime status poller, server lifecycle & command dispatcher
 │   └── style.css              # Cyber-robotic theme matching ARES UI
-├── bot/                       # Mineflayer Sidecar Service (Node.js)
+├── bot/                       # Mineflayer Sidecar & Server Manager (Node.js)
 │   ├── package.json           # Bot engine dependencies
 │   ├── server.js              # HTTP REST API server on port 3847
+│   ├── server-manager.js      # Paper + GeyserMC / Floodgate PS5 cross-play lifecycle engine
 │   ├── autopilot.js           # Autonomous survival & gathering routines
 │   ├── ares-responder.js      # Player chat parser & interaction logic
 │   └── lib/                   # Perception & chat analysis libraries
 ├── tools/                     # ARES & Jaeger Agent Tool Bridge
-│   ├── minecraft.py           # Native Python tool call functions for ARES
+│   ├── minecraft.py           # Native Python tool call functions for ARES & server management
 │   └── mcp_minecraft.py       # MCP Server implementation (stdio)
 └── prompts/                   # Embodied AI Personas
     └── ares_embodied.md       # ARES companion system prompt

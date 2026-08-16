@@ -53,6 +53,7 @@ import {
   summarizeVisibleBlocks,
   summarizeSceneText,
 } from './lib/perception.js';
+import serverManager from './server-manager.js';
 
 // Per-bot locations file to prevent race conditions in multi-agent mode
 const DATA_DIR = path.join(path.dirname(decodeURIComponent(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'))), '..', 'data');
@@ -2650,11 +2651,54 @@ const httpServer = http.createServer(async (req, res) => {
         const elapsed = Math.round((Date.now() - currentTask.started) / 1000);
         return respond(res, 200, { ok: true, data: { task: { ...currentTask, elapsed_s: elapsed } }, state: briefState() });
       }
+
+      // ── Server Manager Endpoints ──────────────
+      if (path === '/api/server/status' || path === '/server/status') {
+        const status = await serverManager.getStatus();
+        return respond(res, 200, { ok: true, data: status });
+      }
+
+      if (path === '/api/server/config' || path === '/server/config') {
+        const config = await serverManager.getConfig();
+        return respond(res, 200, { ok: true, data: config });
+      }
+
+      if (path === '/api/server/logs' || path === '/server/logs') {
+        const limit = parseInt(url.searchParams.get('limit') || '100', 10);
+        const logs = serverManager.getLogs(limit);
+        return respond(res, 200, { ok: true, data: { logs } });
+      }
     }
 
     // ── POST endpoints (actions) ────────────────
     if (req.method === 'POST') {
       const body = await parseBody(req);
+
+      // ── Server Manager Actions ────────────────
+      if (path === '/api/server/start' || path === '/server/start') {
+        const result = await serverManager.startServer(body);
+        return respond(res, result.ok ? 200 : 500, result);
+      }
+
+      if (path === '/api/server/stop' || path === '/server/stop') {
+        const result = await serverManager.stopServer();
+        return respond(res, result.ok ? 200 : 500, result);
+      }
+
+      if (path === '/api/server/restart' || path === '/server/restart') {
+        const result = await serverManager.restartServer();
+        return respond(res, result.ok ? 200 : 500, result);
+      }
+
+      if (path === '/api/server/config' || path === '/server/config') {
+        const result = await serverManager.updateConfig(body);
+        return respond(res, result.ok ? 200 : 500, result);
+      }
+
+      if (path === '/api/server/command' || path === '/server/command') {
+        const result = await serverManager.sendCommand(body.command);
+        return respond(res, result.ok ? 200 : 500, result);
+      }
 
       // Cancel current task
       if (path === '/task/cancel') {
