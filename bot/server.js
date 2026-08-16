@@ -55,6 +55,11 @@ import {
 } from './lib/perception.js';
 import serverManager from './server-manager.js';
 import lanBroadcaster from './lan-broadcaster.js';
+import { AresBrain } from './ares-brain.js';
+import { VillageBuilder } from './village-builder.js';
+
+let aresBrain = null;
+let villageBuilder = null;
 
 // Per-bot locations file to prevent race conditions in multi-agent mode
 const DATA_DIR = path.join(path.dirname(decodeURIComponent(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'))), '..', 'data');
@@ -511,6 +516,10 @@ async function createBot() {
 
       botReady = true;
       reconnectAttempts = 0;
+      aresBrain = new AresBrain(bot, serverManager);
+      villageBuilder = new VillageBuilder(bot);
+      aresBrain.start();
+
       const locs = loadLocations(); if(!locs.spawn){locs.spawn={...posObj(),saved:new Date().toISOString()};saveLocations(locs);}
       log(`Connected! Spawned at ${fmt(bot.entity.position.x)}, ${fmt(bot.entity.position.y)}, ${fmt(bot.entity.position.z)}`);
       resolve(bot);
@@ -2723,6 +2732,31 @@ const httpServer = http.createServer(async (req, res) => {
       if (path === '/api/server/command' || path === '/server/command') {
         const result = await serverManager.sendCommand(body.command);
         return respond(res, result.ok ? 200 : 500, result);
+      }
+
+      // ── Brain & Village Actions ───────────────
+      if (path === '/village/build') {
+        const structure = body.structure || 'townhall';
+        const b = ensureBot();
+        const pos = b.entity.position;
+        if (!villageBuilder) villageBuilder = new VillageBuilder(b);
+        let resBuild;
+        if (structure === 'townhall') resBuild = await villageBuilder.buildTownHall(pos.x + 3, pos.y, pos.z + 3);
+        else if (structure === 'monument') resBuild = await villageBuilder.buildMonument(pos.x, pos.y, pos.z);
+        else if (structure === 'farm') resBuild = await villageBuilder.buildFarm(pos.x - 4, pos.y, pos.z - 4);
+        return respond(res, 200, { ok: true, result: resBuild });
+      }
+
+      if (path === '/brain/start') {
+        const b = ensureBot();
+        if (!aresBrain) aresBrain = new AresBrain(b, serverManager);
+        aresBrain.start();
+        return respond(res, 200, { ok: true, result: 'ARES Autonomous Brain started' });
+      }
+
+      if (path === '/brain/stop') {
+        if (aresBrain) aresBrain.stop();
+        return respond(res, 200, { ok: true, result: 'ARES Autonomous Brain paused' });
       }
 
       // Cancel current task

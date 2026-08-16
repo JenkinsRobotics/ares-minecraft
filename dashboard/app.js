@@ -439,6 +439,25 @@ function clearChatLog() {
   if (feed) feed.innerHTML = '';
 }
 
+async function buildStructure(structure) {
+  appendChatLog(`[Civil Engine] Commencing build order: ${structure}...`);
+  try {
+    const res = await fetch(`${SIDECAR_URL}/village/build`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ structure })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      appendChatLog(`[Civil Engine] ${structure} construction initiated!`);
+    } else {
+      appendChatLog(`[Error] Failed to build ${structure}: ${data.error}`);
+    }
+  } catch (err) {
+    appendChatLog(`[Error] Construction request failed: ${err.message}`);
+  }
+}
+
 function escapeHtml(str) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
