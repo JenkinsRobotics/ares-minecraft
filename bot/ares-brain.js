@@ -11,6 +11,8 @@
  */
 
 import { VillageBuilder } from './village-builder.js';
+import pkg from 'mineflayer-pathfinder';
+const { goals } = pkg;
 
 const OLLAMA_URL = process.env.OLLAMA_URL || 'http://127.0.0.1:11434';
 const LOCAL_MODEL = process.env.OLLAMA_MODEL || 'qwen3.6:35b-mlx';
@@ -111,7 +113,8 @@ export class AresBrain {
     const state = this.getPerceptionState();
     if (!state) return;
 
-    // Fast heuristic safety check: Eat if hungry
+    // Fast heuristic safety check: Eat if hungry & defend against nearby mobs
+    await this.autoDefend();
     if (state.food < 14) {
       try {
         if (this.bot.autoEat) await this.bot.autoEat.eat();
@@ -148,6 +151,120 @@ What is the optimal next step to advance the Village of Antigravity? Output JSON
     }
   }
 
+  async handlePlayerCommand(username, message) {
+    console.log(`[AresBrain] Processing chat from ${username}: "${message}"`);
+    const state = this.getPerceptionState();
+    if (!state) return;
+
+    const prompt = `Player "${username}" just said to you in chat: "${message}"
+
+Current Bot State:
+- Position: (${state.position.x}, ${state.position.y}, ${state.position.z})
+- Health: ${state.health}/20, Food: ${state.food}/20
+- Inventory: ${state.inventory}
+- Nearby: ${state.nearbyEntities}
+
+Respond to ${username} with a friendly, robotic in-game chat message AND choose the best action to fulfill their request.
+Supported actions:
+- follow (params: {"player": "${username}"})
+- stop (params: {})
+- build_townhall (params: {})
+- build_monument (params: {})
+- build_farm (params: {})
+- collect_wood (params: {"count": 5})
+- collect_stone (params: {"count": 10})
+- chat_only (params: {})
+
+Output JSON:
+{
+  "thought": "Why I am choosing this action",
+  "chat": "Message to send back in game chat",
+  "action": "follow" | "stop" | "build_townhall" | "build_monument" | "build_farm" | "collect_wood" | "collect_stone" | "chat_only",
+  "params": {}
+}`;
+
+    const responseText = await this.callLocalModel(prompt);
+    let parsed = null;
+    if (responseText) {
+      try {
+        const cleaned = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+        const match = cleaned.match(/\{[\s\S]*\}/);
+        if (match) parsed = JSON.parse(match[0]);
+      } catch (_) {}
+    }
+
+    if (!parsed) {
+      // Heuristic fallback with rich comprehension
+      const lower = message.toLowerCase();
+      if (lower.includes('bed') || lower.includes('supplies') || lower.includes('give') || lower.includes('drop')) {
+        parsed = {
+          chat: `I have a bed and building supplies for you, ${username}! Bringing them over now.`,
+          action: 'give_bed',
+          params: { player: username }
+        };
+      } else if (lower.includes('house') || lower.includes('see') || lower.includes('look')) {
+        parsed = {
+          chat: `Yes ${username}! This is the Antigravity Town Hall. It has sturdy oak timber walls, glass windows, a bed, and storage chest to keep us safe.`,
+          action: 'chat_only',
+          params: {}
+        };
+      } else if (lower.includes('come') || lower.includes('follow') || lower.includes('here')) {
+        parsed = {
+          chat: `Understood ${username}, following you!`,
+          action: 'follow',
+          params: { player: username }
+        };
+      } else if (lower.includes('stop') || lower.includes('stay')) {
+        parsed = {
+          chat: `Halting all actions, standing by ${username}.`,
+          action: 'stop',
+          params: {}
+        };
+      } else if (lower.includes('build') || lower.includes('town')) {
+        parsed = {
+          chat: `Commencing construction of the Antigravity Town Hall!`,
+          action: 'build_townhall',
+          params: {}
+        };
+      } else {
+        parsed = {
+          chat: `Greetings ${username}! I am ARES, guardian and builder of the Village of Antigravity. Standing by for orders.`,
+          action: 'chat_only',
+          params: {}
+        };
+      }
+    }
+
+    if (parsed.chat && this.bot && this.bot.chat) {
+      this.bot.chat(parsed.chat);
+    }
+
+    await this.dispatchAction(parsed.action, parsed.params, state, username);
+  }
+
+  async autoDefend() {
+    if (!this.bot || !this.bot.entity) return;
+    const pos = this.bot.entity.position;
+    const hostiles = ['zombie', 'skeleton', 'spider', 'creeper', 'drowned', 'enderman'];
+    const mob = Object.values(this.bot.entities).find(e =>
+      e !== this.bot.entity &&
+      hostiles.includes((e.name || '').toLowerCase()) &&
+      e.position.distanceTo(pos) < 5
+    );
+
+    if (mob) {
+      // Auto-equip sword
+      const sword = this.bot.inventory.items().find(i => i.name.includes('sword') || i.name.includes('axe'));
+      if (sword) {
+        try { await this.bot.equip(sword, 'hand'); } catch (_) {}
+      }
+      try {
+        await this.bot.lookAt(mob.position.offset(0, mob.height || 1, 0));
+        await this.bot.attack(mob);
+      } catch (_) {}
+    }
+  }
+
   async executeVillagePhase(state) {
     const { x, y, z } = state.position;
     
@@ -163,9 +280,51 @@ What is the optimal next step to advance the Village of Antigravity? Output JSON
     }
   }
 
-  async dispatchAction(actionName, params = {}, state) {
+  async dispatchAction(actionName, params = {}, state, username = '') {
     const { x, y, z } = state.position;
     switch (actionName) {
+      case 'follow': {
+        const targetPlayer = params.player || username;
+        const cleanName = targetPlayer.toLowerCase().replace(/^\./, '');
+        const entity = Object.values(this.bot.entities).find(e =>
+          e !== this.bot.entity && (
+            (e.username || '').toLowerCase() === targetPlayer.toLowerCase() ||
+            (e.username || '').toLowerCase().includes(cleanName)
+          )
+        );
+        if (entity && this.bot.pathfinder) {
+          this.bot.pathfinder.setGoal(new goals.GoalFollow(entity, 2), true);
+        }
+        break;
+      }
+      case 'give_bed': {
+        const targetPlayer = params.player || username;
+        const cleanName = targetPlayer.toLowerCase().replace(/^\./, '');
+        const entity = Object.values(this.bot.entities).find(e =>
+          e !== this.bot.entity && (
+            (e.username || '').toLowerCase() === targetPlayer.toLowerCase() ||
+            (e.username || '').toLowerCase().includes(cleanName)
+          )
+        );
+        if (entity && this.bot.pathfinder) {
+          await this.bot.pathfinder.goto(new goals.GoalNear(entity.position.x, entity.position.y, entity.position.z, 2));
+          // Toss bed and oak planks
+          const itemsToGive = this.bot.inventory.items().filter(i => i.name.includes('bed') || i.name.includes('planks') || i.name.includes('steak'));
+          for (const it of itemsToGive) {
+            try {
+              await this.bot.lookAt(entity.position.offset(0, entity.height || 1.6, 0));
+              await this.bot.toss(it.type, null, it.count);
+            } catch (_) {}
+          }
+          this.bot.chat(`Here are the supplies for you, ${targetPlayer}!`);
+        }
+        break;
+      }
+      case 'stop': {
+        if (this.bot.pathfinder) this.bot.pathfinder.setGoal(null);
+        try { this.bot.stopDigging(); } catch {}
+        break;
+      }
       case 'build_townhall':
         await this.villageBuilder.buildTownHall(x + 4, y, z + 4);
         break;

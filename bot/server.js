@@ -331,9 +331,14 @@ async function handleChat(username, message) {
           rememberSocialEvent({ actor: username, kind: 'heard', channel: 'public_mention', command: true, message: command });
           if (commandQueue.length > MAX_QUEUE) commandQueue.shift();
           log(`[Queued via mention] ${username}: ${command}`);
+          if (aresBrain) aresBrain.handlePlayerCommand(username, command).catch(e => log(`Brain chat error: ${e.message}`));
         }
       } else {
         rememberSocialEvent({ actor: username, kind: 'heard', channel: routing.channel, message: routing.body });
+        // If message is from a human player, also give a chance for the brain to process
+        if (aresBrain && !CURRENT_CAST.includes(username.toLowerCase())) {
+          aresBrain.handlePlayerCommand(username, routing.body).catch(e => log(`Brain chat error: ${e.message}`));
+        }
       }
     }
   } else {
